@@ -1,0 +1,7 @@
+# Sam kalendarz: wszystkie pierścienie i święta, bez własnych dat i bez listy.
+format: 1
+rok: 2027
+pierścienie: rok, pory roku, zodiak, miesiące
+święta: pl
+strefa: +1
+lista: nie

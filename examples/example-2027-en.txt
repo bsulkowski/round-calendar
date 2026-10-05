@@ -1,0 +1,20 @@
+# Round Calendar: a whole year on one A4 sheet.
+# Lines with a colon are settings; lines starting with a date are your own days.
+
+format: 1
+year: 2027
+first day: mon
+rings: year, seasons, months
+holidays: days off, church, observances
+timezone: +1
+colors: birthday=#c0504d, holidays=#6c8ebf, trip=#82b366
+
+# A single day is circled, a range is shaded. Without a year they repeat every year.
+14.03 Birthday – Ada
+2.09 Birthday – Leo
+30.11 Birthday – Grandpa Tom
+1.02-14.02 Holidays (winter)
+26.06-31.08 Holidays (summer)
+2027-05-20 Trip to the seaside
+
+signature: The Smiths’ year

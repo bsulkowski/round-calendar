@@ -1,0 +1,28 @@
+{
+  "name": "round-calendar",
+  "version": "1.0.0",
+  "description": "A whole year on one A4 sheet, drawn as a disc: weeks around the edge, weekdays as rings, seasons and months inside, with Polish holidays and your own dates.",
+  "license": "MIT",
+  "author": "Bartosz Sułkowski (https://bsulkowski.pl)",
+  "homepage": "https://bsulkowski.pl/round-calendar",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bsulkowski/round-calendar.git"
+  },
+  "type": "module",
+  "exports": {
+    ".": "./src/round-calendar.ts",
+    "./examples": "./src/examples.ts"
+  },
+  "types": "./src/round-calendar.ts",
+  "files": [
+    "src"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "test": "node --experimental-strip-types --test test/round-calendar.test.ts",
+    "examples": "node --experimental-strip-types scripts/examples.ts"
+  }
+}

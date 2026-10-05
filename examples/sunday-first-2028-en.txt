@@ -1,0 +1,6 @@
+# Weeks from Sunday, a leap year, no holidays.
+format: 1
+year: 2028
+first day: sun
+rings: year, seasons, months
+title: A.D. 2028
