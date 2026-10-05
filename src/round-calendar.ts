@@ -559,10 +559,11 @@ export function renderCalendar(cal: Calendar, lang: Lang): string {
     return sector(colStart(col), colStart(col + 1), dayR(ring));
   };
 
-  // Text set along the circle at its centre point, turned so it never stands upside down.
-  const tangentText = (a: number, r: number, s: string, size: number, fill: string, weight = 700) => {
-    const lower = Math.sin(rad(a)) > 0;
-    const rot = lower ? a - 90 : a + 90;
+  // Text in a cell, centred on it and turned in steps of 90° against the cell: along the circle
+  // at the top and bottom of the disc, across it at the sides. The text is never more than 45°
+  // off horizontal, so the sheet reads without turning it.
+  const cellText = (a: number, r: number, s: string, size: number, fill: string, weight = 700) => {
+    const rot = ((((a + 90 + 45) % 90) + 90) % 90) - 45;
     return `<text transform="translate(${P(a, r)}) rotate(${r2(rot)})" y="${r2(size * 0.35)}" font-size="${r2(size)}" font-weight="${weight}" text-anchor="middle" fill="${esc(fill)}">${esc(s)}</text>`;
   };
   let pathId = 0;
@@ -656,12 +657,12 @@ export function renderCalendar(cal: Calendar, lang: Lang): string {
     const { col, ring } = cellOf(d);
     const a = colStart(col) + step / 2;
     const t = new Date((epochDay(y, 1, 1) + d) * 86400000).getUTCDate();
-    o.push(tangentText(a, rMid(dayR(ring)), String(t), fDay, ink.get(d) ?? '#404040'));
+    o.push(cellText(a, rMid(dayR(ring)), String(t), fDay, ink.get(d) ?? '#404040'));
   }
   for (let k = 0; k < 7; k++) {
     const name = WEEKDAYS[lang][(k + firstDay) % 7];
     const f = Math.min(fDay, fitSize(name, fDay, ringArc(k) * 0.85));
-    o.push(tangentText(base + step / 2, rMid(dayR(k)), name, f, '#6b6b6b'));
+    o.push(cellText(base + step / 2, rMid(dayR(k)), name, f, '#6b6b6b'));
   }
   for (const b of belts) {
     const [ri, ro] = beltR[b];
