@@ -8,3 +8,5 @@ top: winter         # what is at the top: seam, a season, a month or a date
 first day: mon      # the weekday nearest the centre; wed puts the weekend in the middle
 rings: year, seasons, months
 timezone: +1
+counter: weeks from 1.09 school weeks   # numbered from 1; a name is optional
+counter: weeks from 1.01                # a day without a year starts again from 1 each year

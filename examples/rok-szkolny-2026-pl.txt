@@ -8,3 +8,5 @@ góra: zima          # co jest na górze: łączenie, pora roku, miesiąc albo d
 pierwszy dzień: pn  # dzień tygodnia najbliżej środka; śr daje weekend w środku
 pierścienie: rok, pory roku, miesiące
 strefa: +1
+licznik: tygodnie od 1.09 tygodnie szkolne   # numery od 1; nazwa nie jest konieczna
+licznik: tygodnie od 1.01                    # dzień bez roku: co roku od nowa od 1

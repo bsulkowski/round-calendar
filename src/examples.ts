@@ -10,6 +10,8 @@ top: winter         # what is at the top: seam, a season, a month or a date
 first day: mon      # the weekday nearest the centre; wed puts the weekend in the middle
 rings: year, seasons, months
 timezone: +1
+counter: weeks from 1.09 school weeks   # numbered from 1; a name is optional
+counter: weeks from 1.01                # a day without a year starts again from 1 each year
 `,
   pl: `# Okrągły kalendarz: cały rok na jednej kartce A4.
 # Każda linia to ustawienie: nazwa, dwukropek i wartość. Każde można pominąć.
@@ -20,5 +22,7 @@ góra: zima          # co jest na górze: łączenie, pora roku, miesiąc albo d
 pierwszy dzień: pn  # dzień tygodnia najbliżej środka; śr daje weekend w środku
 pierścienie: rok, pory roku, miesiące
 strefa: +1
+licznik: tygodnie od 1.09 tygodnie szkolne   # numery od 1; nazwa nie jest konieczna
+licznik: tygodnie od 1.01                    # dzień bez roku: co roku od nowa od 1
 `,
 };

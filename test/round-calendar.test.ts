@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  seasonMoment, parseCalendar, renderCalendar, calendarRange, layoutCalendar, dateOf, epochDay, weekday,
+  seasonMoment, parseCalendar, renderCalendar, calendarRange, layoutCalendar, counterSegments, dateOf, epochDay, weekday,
   withFormatLine, MIN_YEAR, MAX_YEAR,
 } from '../src/round-calendar.ts';
 import { EXAMPLE } from '../src/examples.ts';
@@ -45,7 +45,9 @@ test('both examples read without issues and mean the same', () => {
   const en = parseCalendar(EXAMPLE.en, 'en', 2026), pl = parseCalendar(EXAMPLE.pl, 'pl', 2026);
   assert.deepEqual(en.issues, []);
   assert.deepEqual(pl.issues, []);
-  assert.deepEqual(en, pl);
+  // The same apart from the counter's name, which is the reader's own text.
+  const unnamed = (c: typeof en) => ({ ...c, counters: c.counters.map((x) => ({ ...x, name: '' })) });
+  assert.deepEqual(unnamed(en), unnamed(pl));
 });
 
 test('the range: a calendar year by default, otherwise from the given day for a year', () => {
@@ -113,6 +115,53 @@ test('bands: one stretch per season and month, covering the whole range', () => 
   }
 });
 
+const counter = (text: string, i = 0) => {
+  const cal = parseCalendar(text, 'pl', 2026);
+  assert.deepEqual(cal.issues, [], text);
+  return counterSegments(cal.counters[i], calendarRange(cal)).map((s) => [s.from, s.to, s.label]);
+};
+
+test('a counter of weeks from 1 January numbers the weeks of the year, on exact days', () => {
+  const segs = counter('rok: 2027\nlicznik: tygodnie od 1.01');
+  assert.equal(segs.length, 53);
+  assert.deepEqual(segs[0], [0, 7, '1']);
+  assert.deepEqual(segs[52], [364, 365, '53']);
+});
+
+test('a day without a year repeats: the count starts again from 1 each year', () => {
+  // A school year 2026/27 with weeks of the calendar year: 1.09.2026 falls in week 35 of 2026.
+  const segs = counter('rok: 2026\nod: 1.09\nlicznik: tygodnie od 1.01');
+  assert.deepEqual(segs[0], [0, 2, '35']);
+  const ny = epochDay(2027, 1, 1) - epochDay(2026, 9, 1);
+  assert.deepEqual(segs.find((s) => s[0] === ny), [ny, ny + 7, '1']);
+  assert.deepEqual(segs.find((s) => s[1] === ny), [ny - 1, ny, '53']); // 31.12.2026 alone
+  // Weeks of the school year in the same calendar: from 1 at the start to 53 (one day) at the end.
+  const school = counter('rok: 2026\nod: 1.09\nlicznik: tygodnie od 1.09');
+  assert.deepEqual([school[0], school.at(-1)], [[0, 7, '1'], [364, 365, '53']]);
+});
+
+test('a day with a year counts on, and nothing before it', () => {
+  const months = counter('rok: 2027\nlicznik: miesiące od 31.01.2027');
+  const day = (m: number, d: number) => epochDay(2027, m, d) - epochDay(2027, 1, 1);
+  assert.deepEqual(months.slice(0, 3), [[day(1, 31), day(2, 28), '1'], [day(2, 28), day(3, 31), '2'], [day(3, 31), day(4, 30), '3']]);
+  const years = counter('rok: 2027\nlicznik: lata od 2024-06-15 Ada');
+  assert.deepEqual(years, [[0, day(6, 15), '3'], [day(6, 15), 365, '4']]);
+  assert.deepEqual(counter('rok: 2027\nlicznik: lata od 2030-01-01'), []);
+});
+
+test('counters read in both languages, with or without a name', () => {
+  const pl = parseCalendar('licznik: tygodnie od 1.09 Rok szkolny\nlicznik: miesiące 15.03.2027', 'pl', 2026);
+  const en = parseCalendar('counter: weeks from 1.09 Rok szkolny\ncounter: months 15.03.2027', 'en', 2026);
+  assert.deepEqual(pl.counters, en.counters);
+  assert.deepEqual(pl.counters, [
+    { unit: 'weeks', from: { y: undefined, m: 9, d: 1 }, name: 'Rok szkolny' },
+    { unit: 'months', from: { y: 2027, m: 3, d: 15 }, name: '' },
+  ]);
+  const bad = parseCalendar('licznik: dni od 1.01\nlicznik: tygodnie\nlicznik: tygodnie od 31.02', 'pl', 2026);
+  assert.deepEqual(bad.issues.map((i) => i.line), [1, 2, 3]);
+  assert.deepEqual(bad.counters, []);
+});
+
 test('unknown lines and values are reported, the rest still reads', () => {
   const cal = parseCalendar([
     'rok: 2027', 'od: 31.04', 'góra: przedwiośnie', 'święta: pl', '14.03 Urodziny', 'kolory: weekend=#eee, sobota=#f00',
@@ -142,7 +191,8 @@ test('every kind of year draws', () => {
   for (const y of [MIN_YEAR, 1900, 2000, 2023, 2024, 2026, 2027, 2028, 2100, MAX_YEAR]) {
     for (let d = 0; d < 7; d++) {
       const start = starts[(y + d) % starts.length], top = tops[(y * 3 + d) % tops.length];
-      const text = `rok: ${y}\nod: ${start}\ngóra: ${top}\npierwszy dzień: ${days[d]}\npierścienie: rok, pory roku, zodiak, miesiące`;
+      const counters = d % 2 ? '\nlicznik: tygodnie od 1.01 Tydzień\nlicznik: miesiące od 15.05' : `\nlicznik: lata od 1.07.${y}`;
+      const text = `rok: ${y}\nod: ${start}\ngóra: ${top}\npierwszy dzień: ${days[d]}\npierścienie: rok, pory roku, zodiak, miesiące${counters}`;
       const cal = parseCalendar(text, 'pl', 2026);
       const svg = renderCalendar(cal, 'pl');
       assert.ok(svg.startsWith('<svg') && svg.endsWith('</svg>'), text);
