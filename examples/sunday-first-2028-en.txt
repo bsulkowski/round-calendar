@@ -1,8 +1,10 @@
-# Weeks from Sunday, anticlockwise and inwards, a leap year, January at the top.
+# Weeks from Sunday, anticlockwise and inwards, a leap year, January at the top, a larger centre with two rows.
 format: 1
 year: 2028
 first day: sun
 direction: anticlockwise
 weekdays: inwards
 top: january
-title: A.D. 2028
+title: A.D.
+title: 2028
+centre: 35%

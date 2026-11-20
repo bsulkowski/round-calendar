@@ -275,6 +275,8 @@ test('settings written as text read back the same, in either language', () => {
     'rok: 2027\nod: wiosna\ngóra: lato\npierwszy dzień: śr\nkierunek: przeciwnie\ndni tygodnia: do środka\npierścienie: brak',
     'year: 2028\ntop: january\nrings: counters, zodiac, seasons\ncounter: months from 31.01.2028 to 12\ncounter: weeks from 4.01.2027 week\ntimezone: -5:30',
     'rok: 2026\nod: 1.09.2027\ngóra: 15.03.2028\nkolory: weekend=#eee, linie=#123456\ntytuł: A.D. 2027\npodpis: jeden\npodpis: dwa',
+    'rok: 2026\ntytuł: Rok\ntytuł: szkolny\nśrodek: 40%',
+    'year: 2026\ntitle: none\ncentre: 0',
   ];
   for (const text of texts) {
     const cal = parseCalendar(text, 'pl', 2026);
@@ -284,4 +286,28 @@ test('settings written as text read back the same, in either language', () => {
     }
   }
   assert.equal(formatCalendar(parseCalendar('', 'pl', 2026), 'pl'), 'rok: 2026\n');
+});
+
+test('the centre: rows of text, no text, its size', () => {
+  const cal = (text: string) => parseCalendar(text, 'pl', 2026);
+  assert.deepEqual(cal('').title, []);
+  assert.equal(cal('').centre, 25);
+  assert.deepEqual(cal('tytuł: Rok\ntytuł: szkolny').title, ['Rok', 'szkolny']);
+  assert.equal(cal('tytuł: Rok\ntytuł: brak').title, null);
+  assert.deepEqual(cal('tytuł: brak\ntytuł: 2026').title, ['2026']);
+  assert.equal(cal('środek: 40%').centre, 40);
+  assert.equal(cal('centre: 12,5').centre, 12.5);
+  assert.equal(cal('środek: 0').centre, 0);
+  for (const bad of ['środek: 90%', 'środek: duży', 'środek: -5%']) {
+    assert.equal(cal(bad).issues.length, 1, bad);
+    assert.equal(cal(bad).centre, 25, bad);
+  }
+  const rows = (text: string) => (renderCalendar(cal(text), 'pl').match(/<g class="centre">(.*?)<\/g>/)?.[1].match(/<text/g) ?? []).length;
+  assert.equal(rows(''), 1);
+  assert.equal(rows('tytuł: a\ntytuł: b\ntytuł: c'), 3);
+  assert.equal(rows('tytuł: brak'), 0);
+  assert.equal(rows('środek: 0'), 0);
+  for (const text of ['środek: 0', 'środek: 80%\ntytuł: x\ntytuł: y', 'środek: 5%\ntytuł: bardzo długi napis w środku koła']) {
+    assert.ok(!renderCalendar(cal(text), 'pl').includes('NaN'), text);
+  }
 });

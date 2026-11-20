@@ -39,7 +39,8 @@ be written in English or in Polish — only the names on the sheet follow the la
 | `counter: weeks from 1.09 to 25.06 school weeks` | A band with weeks or months numbered from a day: 1, 2, 3…, each number over the days it holds, changing on exact days. A day without a year repeats: the count starts again from 1 each year. With a year (`from 2027-05-03`) it runs on and shows nothing before that day. `to` ends it on a day, the last one counted (`to 25.06`), or after a number (`to 40`); without it the count runs to the next start or the end of the calendar. Weeks of the calendar year start on its first Monday (`from 4.01.2027`). The name is optional; it stands just before the counter's start (number 1) — before the seam if it starts with the calendar or earlier — in place of the numbers it covers. Several `counter` lines give several bands. |
 | `timezone: +1` | The time zone for the dates of equinoxes and solstices. UTC by default. |
 | `colors: weekend=#eaeaea, lines=#c0c0c0` | Colours of the weekend cells and of the lines. |
-| `title: A.D. 2027` | The text in the middle of the disc instead of the year (or of `2026/2027` for a year that crosses New Year). |
+| `title: A.D. 2027` | The text in the middle of the disc instead of the year (or of `2026/2027` for a year that crosses New Year). Several `title` lines give several rows; `title: none` leaves the middle empty. The text is sized to fit. |
+| `centre: 35%` | The size of the middle: its radius as a share of the disc's radius, from `0` (no middle, the bands reach the centre) to `80%`. 25% by default. |
 | `signature: The Smiths’ year` | A line in the bottom-right corner; several lines give several rows. |
 | `format: 1` | The version of the file format. Saving a file adds it; a file without it is format 1. |
 

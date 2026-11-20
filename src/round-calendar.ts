@@ -148,7 +148,8 @@ export interface Calendar {
   counters: Counter[]; // each its own thin band, where 'counters' stands in the rings
   tz: number; // minutes east of UTC, for the dates of equinoxes and solstices
   colors: Record<string, string>; // 'weekend', 'lines'
-  title: string;
+  title: string[] | null; // lines of text in the centre; [] = the year, null = no text
+  centre: number; // radius of the centre, in % of the disc's radius
   signature: string[];
   issues: Issue[];
 }
@@ -165,6 +166,7 @@ const KEYS: Record<string, string> = {
   strefa: 'tz', 'strefa czasowa': 'tz', timezone: 'tz', 'time zone': 'tz',
   kolory: 'colors', colors: 'colors', colours: 'colors',
   tytuł: 'title', tytul: 'title', title: 'title',
+  środek: 'centre', srodek: 'centre', centre: 'centre', center: 'centre',
   podpis: 'signature', signature: 'signature',
   licznik: 'counter', counter: 'counter',
   format: 'format',
@@ -218,6 +220,10 @@ export const DEFAULT_COLORS: Record<string, string> = { weekend: '#eaeaea', line
 
 const NONE = new Set(['brak', 'none', '-']);
 
+/** The centre's radius as a share of the disc's radius, in %: the default and the largest. */
+export const DEFAULT_CENTRE = 25;
+export const MAX_CENTRE = 80;
+
 const MSG: Record<Lang, Record<string, string>> = {
   en: {
     key: 'unknown setting “{0}”',
@@ -233,6 +239,7 @@ const MSG: Record<Lang, Record<string, string>> = {
     order: 'the end is before the start',
     tz: 'write a time zone as +1 or -5:30',
     color: 'write a colour as weekend=#hex or lines=#hex',
+    centre: 'write the size of the centre as a share of the radius, 0–' + MAX_CENTRE + '% (25%)',
     date: 'there is no such date: {0}',
     outside: '{0} is not in this calendar ({1}–{2})',
     format: 'these settings were saved in format {0}, newer than this page knows (1); they may not show as intended',
@@ -251,6 +258,7 @@ const MSG: Record<Lang, Record<string, string>> = {
     order: 'koniec jest przed początkiem',
     tz: 'wpisz strefę jako +1 albo -5:30',
     color: 'wpisz kolor jako weekend=#hex albo linie=#hex',
+    centre: 'wpisz wielkość środka jako część promienia, 0–' + MAX_CENTRE + '% (25%)',
     date: 'nie ma takiej daty: {0}',
     outside: '{0} nie wypada w tym kalendarzu ({1}–{2})',
     format: 'ustawienia zapisano w formacie {0}, nowszym niż zna ta strona (1); mogą wyglądać inaczej, niż zamierzono',
@@ -293,7 +301,8 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
     counters: [],
     tz: 0,
     colors: {},
-    title: '',
+    title: [],
+    centre: DEFAULT_CENTRE,
     signature: [],
     issues,
   };
@@ -386,7 +395,14 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
         && epochDay(until.y, until.m, until.d) < epochDay(from.y, from.m, from.d)) issues.push({ line: n, message: say('order') });
       else cal.counters.push(until ? { unit, from, until, name } : { unit, from, name });
     } else if (key === 'title') {
-      cal.title = value;
+      // Each line is a row of text; "none" leaves the centre empty, and rows after it start anew.
+      if (NONE.has(low)) cal.title = null;
+      else if (value) cal.title = [...(cal.title ?? []), value];
+    } else if (key === 'centre') {
+      const g = low.match(/^(\d+(?:[.,]\d+)?)\s*%?$/);
+      const v = g ? Number(g[1].replace(',', '.')) : NaN;
+      if (v >= 0 && v <= MAX_CENTRE) cal.centre = v;
+      else issues.push({ line: n, message: say('centre') });
     } else if (key === 'signature') {
       cal.signature.push(value);
     } else if (key === 'format') {
@@ -458,13 +474,13 @@ export { parseDate, validDate, showDate };
 const WORDS: Record<Lang, Record<string, string>> = {
   en: {
     year: 'year', start: 'from', top: 'top', firstDay: 'first day', direction: 'direction', weekdays: 'weekdays',
-    rings: 'rings', counter: 'counter', tz: 'timezone', colors: 'colors', title: 'title', signature: 'signature',
+    rings: 'rings', counter: 'counter', tz: 'timezone', colors: 'colors', title: 'title', centre: 'centre', signature: 'signature',
     seam: 'seam', anticlockwise: 'anticlockwise', inwards: 'inwards', none: 'none', from: 'from', to: 'to',
     weeks: 'weeks', months: 'months', seasons: 'seasons', zodiac: 'zodiac', counters: 'counters', lines: 'lines',
   },
   pl: {
     year: 'rok', start: 'od', top: 'góra', firstDay: 'pierwszy dzień', direction: 'kierunek', weekdays: 'dni tygodnia',
-    rings: 'pierścienie', counter: 'licznik', tz: 'strefa', colors: 'kolory', title: 'tytuł', signature: 'podpis',
+    rings: 'pierścienie', counter: 'licznik', tz: 'strefa', colors: 'kolory', title: 'tytuł', centre: 'środek', signature: 'podpis',
     seam: 'łączenie', anticlockwise: 'przeciwnie do zegara', inwards: 'do środka', none: 'brak', from: 'od', to: 'do',
     weeks: 'tygodnie', months: 'miesiące', seasons: 'pory roku', zodiac: 'zodiak', counters: 'liczniki', lines: 'linie',
   },
@@ -504,7 +520,9 @@ export function formatCalendar(cal: Calendar, lang: Lang): string {
   }
   const colors = Object.entries(cal.colors).map(([k, v]) => `${k === 'lines' ? w.lines : k}=${v}`);
   if (colors.length) put('colors', colors.join(', '));
-  if (cal.title) put('title', cal.title);
+  if (cal.title === null) put('title', w.none);
+  else for (const t of cal.title) put('title', t);
+  if (cal.centre !== DEFAULT_CENTRE) put('centre', `${cal.centre}%`);
   for (const s of cal.signature) put('signature', s);
   return lines.join('\n') + '\n';
 }
@@ -704,8 +722,11 @@ export function renderCalendar(cal: Calendar, lang: Lang): string {
       start: L.counterStarts[i],
     }))
     : [{ kind: r, segs: L.segments[r]!, size: BELT_SIZE[r], font: BELT_FONT[r], ink: BELT_INK[r], name: '' }]));
-  const centre = BELT_SIZE.year;
-  const total = centre + bands.reduce((s, b) => s + b.size, 0) + 7;
+  // The centre is a share of the radius, so its part of the area is f² of the whole.
+  const rest = bands.reduce((s, b) => s + b.size, 0) + 7;
+  const fc = cal.centre / 100;
+  const centre = (fc * fc * rest) / (1 - fc * fc);
+  const total = centre + rest;
   const R = W / 2 - M;
   const cx = W / 2;
   const cy = H / 2;
@@ -767,6 +788,7 @@ export function renderCalendar(cal: Calendar, lang: Lang): string {
   const line = color('lines');
   o.push(`<g fill="none" stroke="${esc(line)}" stroke-linejoin="round">`);
   for (const r of [rAt(centre), ...bandR.slice(0, -1).map(([, ro]) => ro)]) {
+    if (r < 0.5) continue; // no centre
     o.push(`<circle cx="${r2(cx)}" cy="${r2(cy)}" r="${r2(r)}" stroke-width="1.2"/>`);
   }
 
@@ -855,10 +877,27 @@ export function renderCalendar(cal: Calendar, lang: Lang): string {
   });
   {
     const y0 = dateOf(L.range.start)[0], y1 = dateOf(L.range.start + N - 1)[0];
-    const title = cal.title || (y0 === y1 ? String(y0) : `${y0}/${y1}`);
+    const rows = cal.title === null ? [] : cal.title.length ? cal.title : [y0 === y1 ? String(y0) : `${y0}/${y1}`];
     const rc = rAt(centre);
-    const f = Math.min(rc * 0.5, fitSize(title, rc * 0.5, rc * 1.6));
-    o.push(`<text x="${r2(cx)}" y="${r2(cy + f * 0.35)}" font-size="${r2(f)}" font-weight="700" text-anchor="middle" fill="${BELT_INK.year}">${esc(title)}</text>`);
+    // The largest size at which every row fits inside the circle, with the rows stacked
+    // round its middle; one row is never larger than half the radius.
+    const lead = 1.2;
+    const fits = (f: number) => rows.every((row, i) => {
+      const y = Math.abs((i - (rows.length - 1) / 2) * lead * f) + f * 0.45;
+      return y < rc && textWidth(row, f) <= 2 * 0.85 * Math.sqrt(rc * rc - y * y);
+    });
+    let lo = 0, hi = rc * 0.5;
+    if (rows.length && rc > 0 && !fits(hi)) for (let k = 0; k < 30; k++) { const m = (lo + hi) / 2; if (fits(m)) lo = m; else hi = m; }
+    else lo = hi;
+    const f = lo;
+    if (rows.length && f >= 1) {
+      o.push('<g class="centre">');
+      rows.forEach((row, i) => {
+        const y = cy + (i - (rows.length - 1) / 2) * lead * f + f * 0.35;
+        o.push(`<text x="${r2(cx)}" y="${r2(y)}" font-size="${r2(f)}" font-weight="700" text-anchor="middle" fill="${BELT_INK.year}">${esc(row)}</text>`);
+      });
+      o.push('</g>');
+    }
   }
   o.push('</g>');
 
