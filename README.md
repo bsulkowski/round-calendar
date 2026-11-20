@@ -45,7 +45,7 @@ be written in English or in Polish — only the names on the sheet follow the la
 | `format: 1` | The version of the file format. Saving a file adds it; a file without it is format 1. |
 
 Polish keywords: `rok`, `od`, `góra`, `pierwszy dzień`, `kierunek` (`zgodnie z zegarem`, `przeciwnie do zegara`),
-`dni tygodnia` (`od środka`, `do środka`), `pierścienie`, `licznik`, `strefa`, `kolory`, `tytuł`, `podpis`;
+`dni tygodnia` (`od środka`, `do środka`), `pierścienie`, `licznik`, `strefa`, `kolory`, `tytuł`, `środek`, `podpis`;
 units `tygodnie`, `miesiące`; `do` for `to`.
 
 The week runs along the radius and on into the next column, so its order on the radius is always

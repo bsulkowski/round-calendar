@@ -46,7 +46,7 @@ na kartce.
 | `format: 1` | Wersja formatu pliku. Zapis do pliku ją dodaje; plik bez niej to format 1. |
 
 Angielskie słowa kluczowe: `year`, `from`, `top`, `first day`, `direction` (`clockwise`, `anticlockwise`),
-`weekdays` (`outwards`, `inwards`), `rings`, `counter`, `timezone`, `colors`, `title`, `signature`;
+`weekdays` (`outwards`, `inwards`), `rings`, `counter`, `timezone`, `colors`, `title`, `centre`, `signature`;
 jednostki `weeks`, `months`; `to` albo `until` zamiast `do`.
 
 Tydzień biegnie wzdłuż promienia i dalej do następnej kolumny, więc jego kolejność na promieniu
