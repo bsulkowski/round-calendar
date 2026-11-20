@@ -1,0 +1,10 @@
+# Okrągły kalendarz: cały rok na jednej kartce A4.
+# Każda linia to ustawienie: nazwa, dwukropek i wartość. Każde można pominąć.
+
+format: 1
+rok: 2026
+od: 1.09            # rok szkolny; zamiast daty może być pora roku: od: wiosna
+góra: zima          # co jest na górze: łączenie, pora roku, miesiąc albo data
+pierwszy dzień: pn  # dzień tygodnia najbliżej środka; śr daje weekend w środku
+pierścienie: rok, pory roku, miesiące
+strefa: +1

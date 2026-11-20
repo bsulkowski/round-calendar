@@ -1,0 +1,7 @@
+# Od pierwszego dnia wiosny do ostatniego dnia zimy; lato na górze, weekend w środku tygodnia.
+format: 1
+rok: 2027
+od: wiosna
+góra: lato
+pierwszy dzień: śr
+strefa: +1

@@ -1,5 +1,4 @@
-// Writes example sheets to examples/: the settings as a .txt file (it opens on the website
-// with "Open text file") and the sheet drawn from it as an .svg.
+// Writes example sheets to examples/: the settings as a .txt file and the sheet drawn from it as an .svg.
 // Run: npm run examples
 
 import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -7,19 +6,24 @@ import { parseCalendar, renderCalendar, withFormatLine, type Lang } from '../src
 import { EXAMPLE } from '../src/examples.ts';
 
 const sheets: [string, Lang, string][] = [
-  ['example-2027-en', 'en', EXAMPLE.en],
-  ['example-2027-pl', 'pl', EXAMPLE.pl],
-  ['plain-2027-pl', 'pl', `# Sam kalendarz: wszystkie pierścienie i święta, bez własnych dat i bez listy.
+  ['school-year-2026-en', 'en', EXAMPLE.en],
+  ['rok-szkolny-2026-pl', 'pl', EXAMPLE.pl],
+  ['rok-2027-pl', 'pl', `# Rok kalendarzowy z łączeniem na górze, wszystkie pierścienie.
 rok: 2027
 pierścienie: rok, pory roku, zodiak, miesiące
-święta: pl
 strefa: +1
-lista: nie
 `],
-  ['sunday-first-2028-en', 'en', `# Weeks from Sunday, a leap year, no holidays.
+  ['wiosna-2027-pl', 'pl', `# Od pierwszego dnia wiosny do ostatniego dnia zimy; lato na górze, weekend w środku tygodnia.
+rok: 2027
+od: wiosna
+góra: lato
+pierwszy dzień: śr
+strefa: +1
+`],
+  ['sunday-first-2028-en', 'en', `# Weeks from Sunday, a leap year, January at the top.
 year: 2028
 first day: sun
-rings: year, seasons, months
+top: january
 title: A.D. 2028
 `],
 ];

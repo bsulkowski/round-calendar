@@ -1,0 +1,10 @@
+# Round Calendar: a whole year on one A4 sheet.
+# Each line is a setting: a name, a colon and a value. Any of them can be left out.
+
+format: 1
+year: 2026
+from: 1.09          # a school year; a season works too: from: spring
+top: winter         # what is at the top: seam, a season, a month or a date
+first day: mon      # the weekday nearest the centre; wed puts the weekend in the middle
+rings: year, seasons, months
+timezone: +1

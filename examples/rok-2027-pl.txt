@@ -1,0 +1,5 @@
+# Rok kalendarzowy z łączeniem na górze, wszystkie pierścienie.
+format: 1
+rok: 2027
+pierścienie: rok, pory roku, zodiak, miesiące
+strefa: +1

@@ -1,23 +1,28 @@
-// Checks for the round calendar: the computed dates against published ones, the settings syntax
-// in both languages, and that every year in range draws.
+// Checks: equinoxes and solstices against published times, the settings in both languages,
+// the range of days and what ends up at the top, and that every kind of year draws.
 //
 // Run: npm test.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  easter, seasonMoment, parseCalendar, renderCalendar, holidays, dayOfYear, weekday, withFormatLine,
-  MIN_YEAR, MAX_YEAR,
+  seasonMoment, parseCalendar, renderCalendar, calendarRange, layoutCalendar, dateOf, epochDay, weekday,
+  withFormatLine, MIN_YEAR, MAX_YEAR,
 } from '../src/round-calendar.ts';
 import { EXAMPLE } from '../src/examples.ts';
 
-test('Easter matches published dates', () => {
-  const known: Record<number, [number, number]> = {
-    1818: [3, 22], 1943: [4, 25], 2000: [4, 23], 2018: [4, 1], 2019: [4, 21], 2024: [3, 31],
-    2025: [4, 20], 2026: [4, 5], 2027: [3, 28], 2038: [4, 25], 2285: [3, 22],
-  };
-  for (const [y, md] of Object.entries(known)) assert.deepEqual(easter(+y), md, `Easter ${y}`);
-});
+const iso = (e: number) => dateOf(e).map((v, i) => String(v).padStart(i ? 2 : 4, '0')).join('-');
+const range = (text: string) => {
+  const cal = parseCalendar(text, 'pl', 2026);
+  const r = calendarRange(cal);
+  return { from: iso(r.start), to: iso(r.start + r.days - 1), days: r.days, issues: cal.issues.map((i) => i.line) };
+};
+/** The angle of the top of the disc, measured from where column 0 begins, in the turned layout. */
+const atTop = (text: string, lang: 'en' | 'pl' = 'pl') => {
+  const cal = parseCalendar(text, lang, 2026);
+  const L = layoutCalendar(cal, lang);
+  return { L, cal, top: (((270 - L.base) % 360) + 360) % 360 };
+};
 
 test('equinoxes and solstices are within a few minutes of published times (UTC)', () => {
   const known: [number, number, string][] = [
@@ -25,87 +30,104 @@ test('equinoxes and solstices are within a few minutes of published times (UTC)'
     [2026, 0, '2026-03-20T14:46'], [2026, 1, '2026-06-21T08:24'], [2026, 2, '2026-09-23T00:05'], [2026, 3, '2026-12-21T20:50'],
     [2027, 0, '2027-03-20T20:24'], [2027, 1, '2027-06-21T14:10'], [2027, 2, '2027-09-23T06:01'], [2027, 3, '2027-12-22T02:42'],
   ];
-  for (const [y, i, iso] of known) {
-    const diff = Math.abs(seasonMoment(y, i) - Date.parse(iso + 'Z')) / 60000;
-    assert.ok(diff < 3, `${iso}: off by ${diff.toFixed(1)} min`);
+  for (const [y, i, t] of known) {
+    const diff = Math.abs(seasonMoment(y, i) - Date.parse(t + 'Z')) / 60000;
+    assert.ok(diff < 3, `${t}: off by ${diff.toFixed(1)} min`);
   }
 });
 
-test('weekdays and days of the year', () => {
-  assert.equal(weekday(2027, 0), 4); // Friday
-  assert.equal(weekday(2026, 0), 3); // Thursday
-  assert.equal(dayOfYear(2028, 3, 1), 60); // after 29 February
-  assert.equal(dayOfYear(2027, 3, 1), 59);
+test('weekdays', () => {
+  assert.equal(weekday(epochDay(2027, 1, 1)), 4); // Friday
+  assert.equal(weekday(epochDay(2026, 9, 1)), 1); // Tuesday
 });
 
-test('Polish holidays follow the law of the given year', () => {
-  const names = (y: number) => holidays(y, ['off'], 'pl').map((h) => h.name);
-  assert.ok(!names(2010).includes('Trzech Króli'));
-  assert.ok(names(2011).includes('Trzech Króli'));
-  assert.ok(!names(2024).includes('Wigilia'));
-  assert.ok(names(2025).includes('Wigilia'));
-  assert.equal(holidays(2027, ['off'], 'pl').find((h) => h.name === 'Boże Ciało')?.day, dayOfYear(2027, 5, 27));
+test('both examples read without issues and mean the same', () => {
+  const en = parseCalendar(EXAMPLE.en, 'en', 2026), pl = parseCalendar(EXAMPLE.pl, 'pl', 2026);
+  assert.deepEqual(en.issues, []);
+  assert.deepEqual(pl.issues, []);
+  assert.deepEqual(en, pl);
 });
 
-test('both examples read without issues', () => {
-  for (const lang of ['en', 'pl'] as const) {
-    const cal = parseCalendar(EXAMPLE[lang], lang, 2026);
-    assert.deepEqual(cal.issues, [], lang);
-    assert.equal(cal.year, 2027);
-    assert.equal(cal.marks.length, 6);
+test('the range: a calendar year by default, otherwise from the given day for a year', () => {
+  assert.deepEqual(range('rok: 2027'), { from: '2027-01-01', to: '2027-12-31', days: 365, issues: [] });
+  assert.deepEqual(range('rok: 2026\nod: 1.09'), { from: '2026-09-01', to: '2027-08-31', days: 365, issues: [] });
+  assert.deepEqual(range('od: 1.09\nrok: 2027'), { from: '2027-09-01', to: '2028-08-31', days: 366, issues: [] }); // order does not matter
+  assert.deepEqual(range('od: 2027-03-01'), { from: '2027-03-01', to: '2028-02-29', days: 366, issues: [] }); // a full date sets the year
+  assert.deepEqual(range('rok: 2028\nod: 29.02'), { from: '2028-02-29', to: '2029-02-28', days: 366, issues: [] });
+  assert.deepEqual(range('rok: 2027\nod: 29.02'), { from: '2027-01-01', to: '2027-12-31', days: 365, issues: [2] });
+});
+
+test('the range from a season runs to the day before it starts again', () => {
+  // Spring 2027 starts on 20 March in Poland; spring 2028 on 20 March.
+  assert.deepEqual(range('rok: 2027\nod: wiosna\nstrefa: +1'), { from: '2027-03-20', to: '2028-03-19', days: 366, issues: [] });
+  // Winter 2026 starts on 21 December, winter 2027 on 22 December.
+  assert.deepEqual(range('rok: 2026\nod: zima\nstrefa: +1'), { from: '2026-12-21', to: '2027-12-21', days: 366, issues: [] });
+  // The time zone moves a moment near midnight: the 2027 December solstice is at 02:42 UTC.
+  assert.equal(range('rok: 2027\nod: zima\nstrefa: -5').from, '2027-12-21');
+  assert.equal(range('rok: 2027\nod: zima\nstrefa: +1').from, '2027-12-22');
+});
+
+test('the seam is at the top by default', () => {
+  const { L, top } = atTop('rok: 2027');
+  assert.ok(Math.abs(top - L.step / 2) < 1e-9);
+});
+
+test('a date at the top: its week column is centred on top', () => {
+  for (const text of ['rok: 2027\ngóra: 1.09', 'rok: 2026\nod: 1.09\ngóra: 15.01', 'year: 2027\ntop: 2027-06-30']) {
+    const { L, cal, top } = atTop(text);
+    assert.deepEqual(cal.issues, []);
+    const t = cal.top as { m: number; d: number };
+    const [y0] = dateOf(L.range.start);
+    let i = epochDay(y0, t.m, t.d) - L.range.start;
+    if (i < 0) i = epochDay(y0 + 1, t.m, t.d) - L.range.start;
+    const col = 1 + Math.floor((L.offset + i) / 7);
+    assert.ok(Math.abs(top - (col + 0.5) * L.step) < 1e-9, text);
   }
 });
 
-test('a file reads the same on either page', () => {
-  for (const text of [EXAMPLE.en, EXAMPLE.pl]) {
-    const en = parseCalendar(text, 'en', 2026), pl = parseCalendar(text, 'pl', 2026);
-    assert.deepEqual({ ...en, issues: en.issues.map((i) => i.line) }, { ...pl, issues: pl.issues.map((i) => i.line) });
+test('a season or a month at the top: the middle of its stretch is on top', () => {
+  for (const [text, band, key] of [
+    ['rok: 2027\ngóra: zima', 'seasons', 3], // winter runs across the seam
+    ['rok: 2026\nod: 1.09\ngóra: lato', 'seasons', 1],
+    ['year: 2027\ntop: march', 'months', 2],
+    ['rok: 2027\nod: 15.03\ngóra: marzec', 'months', 2], // March in two pieces, joined across the seam
+  ] as const) {
+    const { L, top } = atTop(text);
+    const N = L.range.days;
+    const rel = (x: number) => L.step * (1 + (L.offset + x) / 7);
+    const s = L.segments[band]!.find((x) => x.key === key)!;
+    const mid = (rel(s.from) + (s.to <= N ? rel(s.to) : rel(s.to - N) + 360)) / 2;
+    assert.ok(Math.abs(top - (mid % 360)) < 1e-9, text);
   }
 });
 
-test('settings', () => {
-  const cal = parseCalendar(
-    'year: 2028\nfirst day: sun\nrings: zodiac, months\nholidays: pl\ntimezone: -5:30\nlist: no\ncolors: weekend=#eee, trip=#123456',
-    'en', 2026);
-  assert.deepEqual(cal.issues, []);
-  assert.equal(cal.year, 2028);
-  assert.equal(cal.firstDay, 6);
-  assert.deepEqual(cal.rings, ['zodiac', 'months']);
-  assert.deepEqual(cal.sets, ['off', 'church', 'observance']);
-  assert.equal(cal.tz, -330);
-  assert.equal(cal.list, false);
-  assert.deepEqual(cal.colors, { weekend: '#eee', trip: '#123456' });
+test('bands: one stretch per season and month, covering the whole range', () => {
+  for (const text of ['rok: 2027', 'rok: 2026\nod: 1.09', 'rok: 2027\nod: wiosna', 'rok: 2027\nod: 15.03']) {
+    const { L } = atTop(text);
+    for (const [band, n] of [['seasons', 4], ['months', 12], ['zodiac', 12]] as const) {
+      const segs = L.segments[band]!;
+      assert.equal(segs.length, n, `${text}: ${band}`);
+      const covered = segs.reduce((s, x) => s + x.to - x.from, 0);
+      assert.equal(covered, L.range.days, `${text}: ${band}`);
+    }
+  }
 });
 
-test('own dates', () => {
+test('unknown lines and values are reported, the rest still reads', () => {
   const cal = parseCalendar([
-    'rok: 2027',
-    'kolory: urodziny=#c0504d',
-    '14.03 Urodziny Ady', // yearly, coloured by the first word
-    '29.02 Przestępny', // no 29 February in 2027: skipped
-    '2026-05-01 Zeszły rok', // another year: skipped
-    '20.12-6.01 Ferie', // across New Year: both ends
-    '2026-12-28..2027-01-03 Wyjazd', // with years: the part in 2027
-    '7.04', // circled, not named
-    '31.04 Nie ma', // no such date
-    '2027-03-10 - 2027-03-01 Wstecz', // end before start
+    'rok: 2027', 'od: 31.04', 'góra: przedwiośnie', 'święta: pl', '14.03 Urodziny', 'kolory: weekend=#eee, sobota=#f00',
+    'od: 1.10',
   ].join('\n'), 'pl', 2026);
-  assert.deepEqual(cal.issues.map((i) => i.line), [9, 10]);
-  const marks = cal.marks.map(({ start, end, label, color, range }) => [start, end, label, color, range]);
-  assert.deepEqual(marks, [
-    [72, 72, 'Urodziny Ady', '#c0504d', false],
-    [353, 364, 'Ferie', '#8b5e3c', true],
-    [0, 5, 'Ferie', '#8b5e3c', true],
-    [0, 2, 'Wyjazd', '#8b5e3c', true],
-    [96, 96, '', '#8b5e3c', false],
-  ]);
+  assert.deepEqual(cal.issues.map((i) => i.line), [2, 3, 4, 5, 6]);
+  assert.deepEqual(calendarRange(cal).start, epochDay(2027, 10, 1));
+  assert.deepEqual(cal.colors, { weekend: '#eee' });
 });
 
-test('unknown lines are reported, the rest still reads', () => {
-  const cal = parseCalendar('rok: 2027\nkolor: x\nnic tu nie ma\n14.03 A\nrok: 1200', 'pl', 2026);
-  assert.deepEqual(cal.issues.map((i) => i.line), [2, 3, 5]);
-  assert.equal(cal.year, 2027);
-  assert.equal(cal.marks.length, 1);
+test('a date at the top must fall in the calendar', () => {
+  const cal = parseCalendar('rok: 2027\ngóra: 29.02', 'pl', 2026);
+  assert.deepEqual(cal.issues.map((i) => i.line), [2]);
+  assert.deepEqual(cal.top, { kind: 'seam' });
+  assert.deepEqual(parseCalendar('rok: 2027\nod: 1.09\ngóra: 29.02', 'pl', 2026).issues, []); // 29.02.2028
 });
 
 test('the format line is added once, after leading comments', () => {
@@ -114,11 +136,17 @@ test('the format line is added once, after leading comments', () => {
 });
 
 test('every kind of year draws', () => {
-  const years = [MIN_YEAR, 1900, 2000, 2023, 2024, 2026, 2027, 2028, 2100, MAX_YEAR];
-  for (const y of years) for (let d = 0; d < 7; d++) {
-    const cal = parseCalendar(`rok: ${y}\npierwszy dzień: ${['pn', 'wt', 'śr', 'cz', 'pt', 'sb', 'nd'][d]}\npierścienie: rok, pory roku, zodiak, miesiące\nświęta: pl`, 'pl', 2026);
-    const svg = renderCalendar(cal, 'pl');
-    assert.ok(svg.startsWith('<svg') && svg.endsWith('</svg>'), `${y}/${d}`);
-    assert.ok(!svg.includes('NaN'), `${y}/${d} has NaN`);
+  const days = ['pn', 'wt', 'śr', 'cz', 'pt', 'sb', 'nd'];
+  const starts = ['1.01', '1.09', '29.02', '15.03', 'wiosna', 'zima'];
+  const tops = ['łączenie', 'zima', 'lato', 'styczeń', 'sierpień', '1.06'];
+  for (const y of [MIN_YEAR, 1900, 2000, 2023, 2024, 2026, 2027, 2028, 2100, MAX_YEAR]) {
+    for (let d = 0; d < 7; d++) {
+      const start = starts[(y + d) % starts.length], top = tops[(y * 3 + d) % tops.length];
+      const text = `rok: ${y}\nod: ${start}\ngóra: ${top}\npierwszy dzień: ${days[d]}\npierścienie: rok, pory roku, zodiak, miesiące`;
+      const cal = parseCalendar(text, 'pl', 2026);
+      const svg = renderCalendar(cal, 'pl');
+      assert.ok(svg.startsWith('<svg') && svg.endsWith('</svg>'), text);
+      assert.ok(!svg.includes('NaN'), `${text}: NaN`);
+    }
   }
 });

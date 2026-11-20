@@ -1,10 +1,10 @@
 {
   "name": "round-calendar",
   "version": "1.0.0",
-  "description": "A whole year on one A4 sheet, drawn as a disc: weeks around the edge, weekdays as rings, seasons and months inside, with Polish holidays and your own dates.",
+  "description": "A whole year on one A4 sheet, drawn as a disc: weeks around the edge, weekdays as rings, seasons and months inside. Starts on any day and turns to put any part at the top.",
   "license": "MIT",
   "author": "Bartosz Sułkowski (https://bsulkowski.pl)",
-  "homepage": "https://bsulkowski.pl/round-calendar",
+  "homepage": "https://github.com/bsulkowski/round-calendar",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bsulkowski/round-calendar.git"

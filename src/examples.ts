@@ -1,45 +1,24 @@
-// Example settings, one per language: the ones shown on bsulkowski.pl and drawn in examples/.
-// They show every kind of line at once. People and trips are made up — no real family's dates.
+// Example settings, one per language, drawn in examples/. They show every setting at once.
 
 export const EXAMPLE = {
   en: `# Round Calendar: a whole year on one A4 sheet.
-# Lines with a colon are settings; lines starting with a date are your own days.
+# Each line is a setting: a name, a colon and a value. Any of them can be left out.
 
-year: 2027
-first day: mon
+year: 2026
+from: 1.09          # a school year; a season works too: from: spring
+top: winter         # what is at the top: seam, a season, a month or a date
+first day: mon      # the weekday nearest the centre; wed puts the weekend in the middle
 rings: year, seasons, months
-holidays: days off, church, observances
 timezone: +1
-colors: birthday=#c0504d, holidays=#6c8ebf, trip=#82b366
-
-# A single day is circled, a range is shaded. Without a year they repeat every year.
-14.03 Birthday – Ada
-2.09 Birthday – Leo
-30.11 Birthday – Grandpa Tom
-1.02-14.02 Holidays (winter)
-26.06-31.08 Holidays (summer)
-2027-05-20 Trip to the seaside
-
-signature: The Smiths’ year
 `,
   pl: `# Okrągły kalendarz: cały rok na jednej kartce A4.
-# Linie z dwukropkiem to ustawienia, linie zaczynające się od daty to Twoje dni.
+# Każda linia to ustawienie: nazwa, dwukropek i wartość. Każde można pominąć.
 
-rok: 2027
-pierwszy dzień: pn
+rok: 2026
+od: 1.09            # rok szkolny; zamiast daty może być pora roku: od: wiosna
+góra: zima          # co jest na górze: łączenie, pora roku, miesiąc albo data
+pierwszy dzień: pn  # dzień tygodnia najbliżej środka; śr daje weekend w środku
 pierścienie: rok, pory roku, miesiące
-święta: wolne, kościelne, okolicznościowe
 strefa: +1
-kolory: urodziny=#c0504d, ferie=#6c8ebf, wakacje=#6c8ebf, wyjazd=#82b366
-
-# Pojedynczy dzień dostaje kółko, zakres się zaciemnia. Daty bez roku powtarzają się co roku.
-14.03 Urodziny Ady
-2.09 Urodziny Leona
-30.11 Urodziny dziadka Tomka
-1.02-14.02 Ferie zimowe
-26.06-31.08 Wakacje
-2027-05-20 Wyjazd nad morze
-
-podpis: Rok Nowaków
 `,
 };
