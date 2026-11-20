@@ -623,10 +623,11 @@ export function renderCalendar(cal: Calendar, lang: Lang): string {
 
   // Lines: circles between the bands, steps between months, ticks in the months band.
   const line = color('lines');
-  // Where the months band lies right inside the weekday rings, the steps run on across it.
+  // Where the months band lies right inside the weekday rings, the steps run on across it and
+  // no circle parts it from the days: a month's name stands in the same field as its days.
   const monthsIn = bands.length && bands[bands.length - 1].kind === 'months' ? bandR[bands.length - 1][0] : undefined;
   o.push(`<g fill="none" stroke="${esc(line)}" stroke-linejoin="round">`);
-  for (const r of [rAt(centre), ...bandR.map(([, ro]) => ro)]) {
+  for (const r of [rAt(centre), ...bandR.map(([, ro]) => ro)].filter((x) => monthsIn === undefined || Math.abs(x - r0) > 1e-9)) {
     o.push(`<circle cx="${r2(cx)}" cy="${r2(cy)}" r="${r2(r)}" stroke-width="1.2"/>`);
   }
 
@@ -643,10 +644,13 @@ export function renderCalendar(cal: Calendar, lang: Lang): string {
   };
   const steps = [...new Set([0, ...monthStarts, N])].sort((a, b) => a - b);
   o.push(`<path d="${steps.map(stepPath).join(' ')}" stroke-width="2"/>`);
-  // The outer edge runs from the first day to the last; the inner one leaves out the seam column.
+  // The outer edge runs from the first day to the last. The inner one leaves out the seam column,
+  // or with the months band right inside, closes only the seam column.
   const first = cellOf(0), last = cellOf(N);
   o.push(`<path d="M ${P(colStart(first.col), R)} ${arcTo(colStart(first.col), colStart(last.col), R)}" stroke-width="2"/>`);
-  o.push(`<path d="M ${P(base + step, r0)} ${arcTo(base + step, base + 360 - 0.001, r0)}" stroke-width="1.2"/>`);
+  o.push(monthsIn === undefined
+    ? `<path d="M ${P(base + step, r0)} ${arcTo(base + step, base + 360 - 0.001, r0)}" stroke-width="1.2"/>`
+    : `<path d="M ${P(base, r0)} ${arcTo(base, base + step, r0)}" stroke-width="1.2"/>`);
 
   // A stretch that ends at the seam leaves the seam column empty; one that runs across it fills it.
   const segAngles = (s: Segment): [number, number] =>
