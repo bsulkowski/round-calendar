@@ -10,14 +10,15 @@ Cały rok na jednej kartce A4, narysowany jako koło.
 
 Tygodnie idą po obwodzie jak godziny na tarczy zegara, a każdy dzień tygodnia to pierścień:
 wszystkie poniedziałki leżą na jednym okręgu, a weekendy tworzą pas. Pierścienie mają równe
-pola — zewnętrzne są cieńsze, ale dłuższe. W środku są pasy pór roku (od prawdziwych równonocy
-i przesileń), zodiaku i miesięcy, a pośrodku rok. Liczniki — tygodnie roku, miesiące życia — można
-dodać jako własne cienkie pasy.
+pola — zewnętrzne są cieńsze, ale dłuższe. Pośrodku jest rok, a wokół niego, tuż wewnątrz dni,
+miesiące. Między nimi mogą stać pasy pór roku (od prawdziwych równonocy i przesileń) i zodiaku
+oraz liczniki — tygodnie roku szkolnego, miesiące od danego dnia — jako własne cienkie pasy.
 
 Rok może zaczynać się dowolnego dnia — 1 stycznia, na początku roku szkolnego, w pierwszy dzień
 wiosny — i trwa od niego rok. Tam, gdzie jego koniec spotyka się z początkiem, jest łączenie:
 jedna kolumna z nazwami dni tygodnia. Koło można obrócić tak, żeby na górze było łączenie, pora
-roku, miesiąc albo wybrany dzień.
+roku, miesiąc albo wybrany dzień. Domyślnie czas biegnie zgodnie z ruchem wskazówek zegara, a każdy
+tydzień od środka na zewnątrz; oba kierunki można odwrócić.
 
 ## Ustawienia
 
@@ -32,8 +33,10 @@ na kartce.
 | `od: 1.09` | Pierwszy dzień. Kalendarz trwa do dnia przed tą samą datą rok później. Pełna data (`1.09.2026`, `2026-09-01`) ustawia też rok. Domyślnie 1 stycznia. |
 | `od: wiosna` | Pierwszy dzień pory roku (`wiosna`, `lato`, `jesień`, `zima`): dzień jej równonocy albo przesilenia. Kalendarz trwa do dnia przed jej następnym początkiem. |
 | `góra: łączenie` | Co jest na górze koła: łączenie (domyślnie), środek pory roku (`zima`) albo miesiąca (`styczeń`), albo tydzień danego dnia (`1.09`). |
-| `pierwszy dzień: nd` | Dzień tygodnia na najbardziej wewnętrznym pierścieniu; następne idą na zewnątrz. Domyślnie poniedziałek. `śr` daje weekend w środku. |
-| `pierścienie: rok, pory roku, zodiak, miesiące` | Pasy wewnątrz pierścieni dni, od środka na zewnątrz. `rok` to koło pośrodku; `liczniki` ustawia miejsce liczników (bez tego stoją tuż wewnątrz miesięcy). Domyślnie rok, pory roku i miesiące. |
+| `pierwszy dzień: nd` | Dzień, od którego zaczyna się tydzień na promieniu: na najbardziej wewnętrznym pierścieniu, a przy `dni tygodnia: do środka` na zewnętrznym. Domyślnie poniedziałek. `śr` daje weekend w środku. |
+| `kierunek: przeciwnie do zegara` | W którą stronę idą tygodnie: `zgodnie z zegarem` (domyślnie) albo `przeciwnie do zegara`. |
+| `dni tygodnia: do środka` | W którą stronę biegnie tydzień wzdłuż promienia: `od środka` (domyślnie) albo `do środka`, od krawędzi. |
+| `pierścienie: pory roku, zodiak, liczniki` | Pasy między rokiem pośrodku a miesiącami, które są zawsze, od środka na zewnątrz. `liczniki` ustawia miejsce liczników (bez tego stoją na końcu, tuż wewnątrz miesięcy). Domyślnie pory roku; `pierścienie: brak` zostawia sam rok i miesiące. |
 | `licznik: tygodnie od 1.09 do 25.06 tygodnie szkolne` | Pas z tygodniami albo miesiącami liczonymi od danego dnia: 1, 2, 3…, każdy numer nad dniami, które obejmuje, zmiana w dokładne dni. Dzień bez roku się powtarza: co roku liczy się od nowa od 1. Z rokiem (`od 2027-05-03`) liczy dalej, a przed tym dniem nic nie pokazuje. `do` kończy licznik w dany dzień, ostatni liczony (`do 25.06`), albo po danym numerze (`do 40`); bez tego liczy do następnego początku albo do końca kalendarza. Tygodnie roku kalendarzowego zaczyna się od pierwszego poniedziałku (`od 4.01.2027`). Nazwa nie jest konieczna; stoi tuż przed początkiem licznika (numerem 1) — przed łączeniem, jeśli licznik zaczyna się razem z kalendarzem albo wcześniej — w miejscu numerów, które zakrywa. Kilka linii `licznik` to kilka pasów. |
 | `strefa: +1` | Strefa czasowa dla dat równonocy i przesileń. Domyślnie UTC. |
 | `kolory: weekend=#eaeaea, linie=#c0c0c0` | Kolory pól weekendu i linii. |
@@ -41,18 +44,20 @@ na kartce.
 | `podpis: Rok Nowaków` | Linijka w prawym dolnym rogu; kilka takich linii to kilka wierszy. |
 | `format: 1` | Wersja formatu pliku. Zapis do pliku ją dodaje; plik bez niej to format 1. |
 
-Angielskie słowa kluczowe: `year`, `from`, `top`, `first day`, `rings`, `counter`, `timezone`, `colors`, `title`, `signature`;
+Angielskie słowa kluczowe: `year`, `from`, `top`, `first day`, `direction` (`clockwise`, `anticlockwise`),
+`weekdays` (`outwards`, `inwards`), `rings`, `counter`, `timezone`, `colors`, `title`, `signature`;
 jednostki `weeks`, `months`; `to` albo `until` zamiast `do`.
 
-Tydzień biegnie wzdłuż promienia na zewnątrz i dalej do następnej kolumny, więc jego kolejność
-na promieniu to zawsze siedem dni po kolei; `pierwszy dzień` wybiera, od którego się zaczyna.
+Tydzień biegnie wzdłuż promienia i dalej do następnej kolumny, więc jego kolejność na promieniu
+to zawsze siedem dni po kolei; `pierwszy dzień` wybiera, od którego się zaczyna, `dni tygodnia` —
+w którą stronę biegnie.
 
 Pasy też są cyklami. Pora roku albo miesiąc przecięte łączeniem to jeden odcinek przez nie:
 w roku szkolnym lato z końca (2027) przechodzi w lato z początku (2026). Liczniki nie: ich numery
 na końcu i na początku są różne, więc kończą się na łączeniu.
 
 Linie stoją tylko tam, gdzie dzielą dni: schodkowe granice miesięcy, które przechodzą przez pas
-miesięcy, gdy ten leży tuż wewnątrz pierścieni dni. Pozostałe pasy nie mają kresek; ich podpisy
+miesięcy tuż wewnątrz pierścieni dni. Pozostałe pasy nie mają kresek; ich podpisy
 stoją na środku swoich odcinków.
 
 Gotowe ustawienia i narysowane z nich arkusze są w [`examples/`](examples).

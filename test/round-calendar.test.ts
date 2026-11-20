@@ -21,7 +21,8 @@ const range = (text: string) => {
 const atTop = (text: string, lang: 'en' | 'pl' = 'pl') => {
   const cal = parseCalendar(text, lang, 2026);
   const L = layoutCalendar(cal, lang);
-  return { L, cal, top: (((270 - L.base) % 360) + 360) % 360 };
+  // How far the top lies from where column 0 begins, along the time direction.
+  return { L, cal, top: (((L.turn * (270 - L.base)) % 360) + 360) % 360 };
 };
 
 test('equinoxes and solstices are within a few minutes of published times (UTC)', () => {
@@ -67,6 +68,34 @@ test('the range from a season runs to the day before it starts again', () => {
   // The time zone moves a moment near midnight: the 2027 December solstice is at 02:42 UTC.
   assert.equal(range('rok: 2027\nod: zima\nstrefa: -5').from, '2027-12-21');
   assert.equal(range('rok: 2027\nod: zima\nstrefa: +1').from, '2027-12-22');
+});
+
+test('directions: clockwise and outwards by default, either can be turned', () => {
+  const d = (text: string, lang: 'en' | 'pl' = 'pl') => {
+    const c = parseCalendar(text, lang, 2026);
+    return [c.clockwise, c.outwards, c.issues.length];
+  };
+  assert.deepEqual(d(''), [true, true, 0]);
+  assert.deepEqual(d('kierunek: przeciwnie do zegara\ndni tygodnia: do środka'), [false, false, 0]);
+  assert.deepEqual(d('direction: anticlockwise\nweekdays: inwards', 'en'), [false, false, 0]);
+  assert.deepEqual(d('kierunek: zgodnie z zegarem\ndni tygodnia: od środka'), [true, true, 0]);
+  assert.deepEqual(d('kierunek: w bok\ndni tygodnia: w poprzek'), [true, true, 2]);
+});
+
+test('the year and the months are always there; the other bands are chosen', () => {
+  const rings = (text: string) => { const c = parseCalendar(text, 'pl', 2026); return [c.rings, c.issues.length]; };
+  assert.deepEqual(rings(''), [['seasons'], 0]);
+  assert.deepEqual(rings('pierścienie: rok, zodiak, pory roku, miesiące'), [['zodiac', 'seasons'], 0]);
+  assert.deepEqual(rings('pierścienie: brak'), [[], 0]);
+  assert.deepEqual(rings('pierścienie: tygodnie'), [[], 1]);
+});
+
+test('anticlockwise, the chosen thing is still at the top', () => {
+  for (const text of ['kierunek: przeciwnie\nrok: 2027', 'kierunek: przeciwnie\nrok: 2027\ngóra: 1.09', 'kierunek: przeciwnie\nrok: 2026\nod: 1.09\ngóra: zima']) {
+    const cw = atTop(text.replace('kierunek: przeciwnie\n', '')), ccw = atTop(text);
+    assert.equal(ccw.L.turn, -1);
+    assert.ok(Math.abs(ccw.top - cw.top) < 1e-9, text);
+  }
 });
 
 test('the seam is at the top by default', () => {
@@ -230,7 +259,8 @@ test('every kind of year draws', () => {
     for (let d = 0; d < 7; d++) {
       const start = starts[(y + d) % starts.length], top = tops[(y * 3 + d) % tops.length];
       const counters = d % 2 ? '\nlicznik: tygodnie od 1.01 Tydzień\nlicznik: miesiące od 15.05' : `\nlicznik: tygodnie od 1.07.${y} do 40\nlicznik: miesiące od 1.09 do 30.06 Szkoła`;
-      const text = `rok: ${y}\nod: ${start}\ngóra: ${top}\npierwszy dzień: ${days[d]}\npierścienie: rok, pory roku, zodiak, miesiące${counters}`;
+      const dirs = `\nkierunek: ${(y + d) % 2 ? 'zgodnie' : 'przeciwnie'}\ndni tygodnia: ${d % 3 ? 'od środka' : 'do środka'}`;
+      const text = `rok: ${y}\nod: ${start}\ngóra: ${top}\npierwszy dzień: ${days[d]}\npierścienie: pory roku, zodiak${counters}${dirs}`;
       const cal = parseCalendar(text, 'pl', 2026);
       const svg = renderCalendar(cal, 'pl');
       assert.ok(svg.startsWith('<svg') && svg.endsWith('</svg>'), text);
