@@ -11,7 +11,8 @@ A whole year on one A4 sheet, drawn as a disc.
 Weeks go round the edge like the hours on a clock, and each weekday is a ring, so all the
 Mondays lie on one circle and the weekends make a band. The rings have equal areas: the outer
 ones are thinner but longer. Inside are bands for the seasons (starting on the real equinoxes and
-solstices), the zodiac and the months, and the year in the middle.
+solstices), the zodiac and the months, and the year in the middle. Counters — weeks of the year,
+months of age — can be added as thin bands of their own.
 
 The year can start on any day — on 1 January, at the start of a school year, on the first day
 of spring — and runs for a year from there. Where its end meets its start there is a seam: one
@@ -31,20 +32,27 @@ be written in English or in Polish — only the names on the sheet follow the la
 | `from: spring` | The first day of a season (`spring`, `summer`, `autumn`, `winter`): the day of its equinox or solstice. The calendar runs to the day before that season starts again. |
 | `top: seam` | What is at the top of the disc: the seam (the default), the middle of a season (`winter`) or of a month (`january`), or the week of a day (`1.09`). |
 | `first day: sun` | The weekday of the innermost ring; the others follow outwards. Monday by default. `wed` puts the weekend in the middle. |
-| `rings: year, seasons, zodiac, months` | The bands inside the weekday rings, from the centre outwards. `year` is the disc in the middle. By default year, seasons and months. |
+| `rings: year, seasons, zodiac, months` | The bands inside the weekday rings, from the centre outwards. `year` is the disc in the middle; `counters` sets where the counters go (else just inside the months). By default year, seasons and months. |
+| `counter: weeks from 1.09 school weeks` | A band with weeks, months or years numbered from a day: 1, 2, 3…, each number over the days it holds, changing on exact days. A day without a year repeats: the count starts again from 1 each year (`from 1.01` gives the weeks of the calendar year). With a year (`from 2024-06-15`) it runs on, like an age, and shows nothing before that day. The name is optional; it stands on the seam, in place of the numbers it covers. Several `counter` lines give several bands. |
 | `timezone: +1` | The time zone for the dates of equinoxes and solstices. UTC by default. |
 | `colors: weekend=#eaeaea, lines=#c0c0c0` | Colours of the weekend cells and of the lines. |
 | `title: A.D. 2027` | The text in the middle of the disc instead of the year (or of `2026/2027` for a year that crosses New Year). |
 | `signature: The Smiths’ year` | A line in the bottom-right corner; several lines give several rows. |
 | `format: 1` | The version of the file format. Saving a file adds it; a file without it is format 1. |
 
-Polish keywords: `rok`, `od`, `góra`, `pierwszy dzień`, `pierścienie`, `strefa`, `kolory`, `tytuł`, `podpis`.
+Polish keywords: `rok`, `od`, `góra`, `pierwszy dzień`, `pierścienie`, `licznik`, `strefa`, `kolory`, `tytuł`, `podpis`;
+units `tygodnie`, `miesiące`, `lata`.
 
 The week runs outwards along the radius and on into the next column, so its order on the radius
 is always the seven days in sequence; `first day` chooses where the sequence starts.
 
 The bands are cycles too. A season or a month cut by the seam is one stretch across it: in a school
-year, the summer at the end (2027) runs on into the summer at the start (2026).
+year, the summer at the end (2027) runs on into the summer at the start (2026). Counters are not:
+their numbers at the end and at the start differ, so they stop at the seam.
+
+Lines stand only where they divide days: the steps between months, which run on across the months
+band when it lies right inside the weekday rings. The other bands have no ticks; their labels
+stand in the middle of their stretches.
 
 Ready-made settings and the sheets drawn from them are in [`examples/`](examples).
 
@@ -90,7 +98,7 @@ release — a new option → 1.1, a fix in the drawing → 1.0.1.
 ## Tests
 
 ```sh
-npm test            # equinoxes against published times, the settings, the range and the top, every year draws
+npm test            # equinoxes against published times, the settings, the range, the top and counters, every year draws
 npm run examples    # redraw examples/
 ```
 

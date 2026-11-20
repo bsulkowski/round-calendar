@@ -11,7 +11,8 @@ Cały rok na jednej kartce A4, narysowany jako koło.
 Tygodnie idą po obwodzie jak godziny na tarczy zegara, a każdy dzień tygodnia to pierścień:
 wszystkie poniedziałki leżą na jednym okręgu, a weekendy tworzą pas. Pierścienie mają równe
 pola — zewnętrzne są cieńsze, ale dłuższe. W środku są pasy pór roku (od prawdziwych równonocy
-i przesileń), zodiaku i miesięcy, a pośrodku rok.
+i przesileń), zodiaku i miesięcy, a pośrodku rok. Liczniki — tygodnie roku, miesiące życia — można
+dodać jako własne cienkie pasy.
 
 Rok może zaczynać się dowolnego dnia — 1 stycznia, na początku roku szkolnego, w pierwszy dzień
 wiosny — i trwa od niego rok. Tam, gdzie jego koniec spotyka się z początkiem, jest łączenie:
@@ -32,20 +33,27 @@ na kartce.
 | `od: wiosna` | Pierwszy dzień pory roku (`wiosna`, `lato`, `jesień`, `zima`): dzień jej równonocy albo przesilenia. Kalendarz trwa do dnia przed jej następnym początkiem. |
 | `góra: łączenie` | Co jest na górze koła: łączenie (domyślnie), środek pory roku (`zima`) albo miesiąca (`styczeń`), albo tydzień danego dnia (`1.09`). |
 | `pierwszy dzień: nd` | Dzień tygodnia na najbardziej wewnętrznym pierścieniu; następne idą na zewnątrz. Domyślnie poniedziałek. `śr` daje weekend w środku. |
-| `pierścienie: rok, pory roku, zodiak, miesiące` | Pasy wewnątrz pierścieni dni, od środka na zewnątrz. `rok` to koło pośrodku. Domyślnie rok, pory roku i miesiące. |
+| `pierścienie: rok, pory roku, zodiak, miesiące` | Pasy wewnątrz pierścieni dni, od środka na zewnątrz. `rok` to koło pośrodku; `liczniki` ustawia miejsce liczników (bez tego stoją tuż wewnątrz miesięcy). Domyślnie rok, pory roku i miesiące. |
+| `licznik: tygodnie od 1.09 tygodnie szkolne` | Pas z tygodniami, miesiącami albo latami liczonymi od danego dnia: 1, 2, 3…, każdy numer nad dniami, które obejmuje, zmiana w dokładne dni. Dzień bez roku się powtarza: co roku liczy się od nowa od 1 (`od 1.01` daje tygodnie roku kalendarzowego). Z rokiem (`od 2024-06-15`) liczy dalej, jak wiek, a przed tym dniem nic nie pokazuje. Nazwa nie jest konieczna; stoi na łączeniu, w miejscu numerów, które zakrywa. Kilka linii `licznik` to kilka pasów. |
 | `strefa: +1` | Strefa czasowa dla dat równonocy i przesileń. Domyślnie UTC. |
 | `kolory: weekend=#eaeaea, linie=#c0c0c0` | Kolory pól weekendu i linii. |
 | `tytuł: A.D. 2027` | Napis w środku koła zamiast roku (albo `2026/2027` dla roku przechodzącego przez Nowy Rok). |
 | `podpis: Rok Nowaków` | Linijka w prawym dolnym rogu; kilka takich linii to kilka wierszy. |
 | `format: 1` | Wersja formatu pliku. Zapis do pliku ją dodaje; plik bez niej to format 1. |
 
-Angielskie słowa kluczowe: `year`, `from`, `top`, `first day`, `rings`, `timezone`, `colors`, `title`, `signature`.
+Angielskie słowa kluczowe: `year`, `from`, `top`, `first day`, `rings`, `counter`, `timezone`, `colors`, `title`, `signature`;
+jednostki `weeks`, `months`, `years`.
 
 Tydzień biegnie wzdłuż promienia na zewnątrz i dalej do następnej kolumny, więc jego kolejność
 na promieniu to zawsze siedem dni po kolei; `pierwszy dzień` wybiera, od którego się zaczyna.
 
 Pasy też są cyklami. Pora roku albo miesiąc przecięte łączeniem to jeden odcinek przez nie:
-w roku szkolnym lato z końca (2027) przechodzi w lato z początku (2026).
+w roku szkolnym lato z końca (2027) przechodzi w lato z początku (2026). Liczniki nie: ich numery
+na końcu i na początku są różne, więc kończą się na łączeniu.
+
+Linie stoją tylko tam, gdzie dzielą dni: schodkowe granice miesięcy, które przechodzą przez pas
+miesięcy, gdy ten leży tuż wewnątrz pierścieni dni. Pozostałe pasy nie mają kresek; ich podpisy
+stoją na środku swoich odcinków.
 
 Gotowe ustawienia i narysowane z nich arkusze są w [`examples/`](examples).
 
@@ -91,7 +99,7 @@ z każdym wydaniem — nowa opcja → 1.1, poprawka rysunku → 1.0.1.
 ## Testy
 
 ```sh
-npm test            # równonoce vs. opublikowane, ustawienia, zakres i góra, rysowanie każdego roku
+npm test            # równonoce vs. opublikowane, ustawienia, zakres, góra i liczniki, rysowanie każdego roku
 npm run examples    # przerysowanie examples/
 ```
 
