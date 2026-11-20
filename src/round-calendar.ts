@@ -503,6 +503,15 @@ export function counterSegments(c: Counter, r: Range): Segment[] {
   return out.sort((a, b) => a.from - b.from);
 }
 
+/** Index of the day a counter starts from (its number 1) in the range: the first one, if a day
+ * without a year comes up twice; undefined if it is not in the range. */
+export function counterStart(c: Counter, r: Range): number | undefined {
+  const [y0] = dateOf(r.start);
+  const days = c.from.y !== undefined ? [yearly(c.from.y, c.from.m, c.from.d)] : [y0, y0 + 1].map((y) => yearly(y, c.from.m, c.from.d));
+  const i = days.find((e) => e >= r.start && e < r.start + r.days);
+  return i === undefined ? undefined : i - r.start;
+}
+
 export interface Layout {
   range: Range;
   offset: number; // empty cells before the first day in its week column
@@ -511,6 +520,7 @@ export interface Layout {
   base: number; // angle where column 0 begins (0° = right, clockwise)
   segments: Partial<Record<Band, Segment[]>>;
   counters: Segment[][]; // in the order of cal.counters
+  counterStarts: (number | undefined)[];
 }
 
 export function layoutCalendar(cal: Calendar, lang: Lang): Layout {
@@ -536,7 +546,8 @@ export function layoutCalendar(cal: Calendar, lang: Lang): Layout {
     if (s) anchor = (rel(s.from) + segEnd(s)) / 2;
   }
   const counters = cal.counters.map((c) => counterSegments(c, range));
-  return { range, offset, columns, step, base: 270 - anchor, segments, counters };
+  const counterStarts = cal.counters.map((c) => counterStart(c, range));
+  return { range, offset, columns, step, base: 270 - anchor, segments, counters, counterStarts };
 }
 
 /* ---------- drawing ---------- */
@@ -587,7 +598,7 @@ export function renderCalendar(cal: Calendar, lang: Lang): string {
   const hasYear = rings.includes('year');
   // The bands between the year and the weekday rings, from the centre outwards. Counters stand
   // where 'counters' is in the rings, or else just inside the months.
-  interface BandEntry { kind: Band | 'counter'; segs: Segment[]; size: number; font: number; ink: string; name: string }
+  interface BandEntry { kind: Band | 'counter'; segs: Segment[]; size: number; font: number; ink: string; name: string; start?: number }
   const order: Ring[] = rings.filter((r) => r !== 'year');
   if (L.counters.length && !order.includes('counters')) {
     const i = order.indexOf('months');
@@ -596,6 +607,7 @@ export function renderCalendar(cal: Calendar, lang: Lang): string {
   const bands: BandEntry[] = order.flatMap((r): BandEntry[] => (r === 'counters'
     ? L.counters.map((segs, i) => ({
       kind: 'counter', segs, size: BELT_SIZE.counters, font: BELT_FONT.counters, ink: BELT_INK.counters, name: cal.counters[i].name,
+      start: L.counterStarts[i],
     }))
     : [{ kind: r as Band, segs: L.segments[r as Band]!, size: BELT_SIZE[r], font: BELT_FONT[r], ink: BELT_INK[r], name: '' }]));
   const centre = hasYear ? BELT_SIZE.year : 0.2;
@@ -724,11 +736,13 @@ export function renderCalendar(cal: Calendar, lang: Lang): string {
       return;
     }
     // A counter: numbers of one size, each over its stretch, left out where they do not fit.
-    // The name, if any, stands just before the seam and takes the place of the numbers it covers.
+    // The name, if any, stands just before the counter's start (its number 1) and takes the place
+    // of the numbers it covers. A counter that starts with the calendar, or before it, has its
+    // name just before the seam.
     const f = Math.min(b.font, (ro - ri) * 0.62);
     const deg = (len: number) => (len / r) * (180 / Math.PI);
     const nameHalf = b.name ? deg(textWidth(b.name, f) / 2 + f * 0.6) : 0;
-    const nameMid = base - nameHalf;
+    const nameMid = (b.start ? dayAngle(b.start) : base) - nameHalf;
     if (b.name) o.push(arcText(nameMid - nameHalf, nameMid + nameHalf, r, b.name, f, b.ink));
     for (const s of b.segs) {
       const [a0, a1] = segAngles(s);

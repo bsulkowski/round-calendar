@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  seasonMoment, parseCalendar, renderCalendar, calendarRange, layoutCalendar, counterSegments, dateOf, epochDay, weekday,
+  seasonMoment, parseCalendar, renderCalendar, calendarRange, layoutCalendar, counterSegments, counterStart, dateOf, epochDay, weekday,
   withFormatLine, MIN_YEAR, MAX_YEAR,
 } from '../src/round-calendar.ts';
 import { EXAMPLE } from '../src/examples.ts';
@@ -165,6 +165,14 @@ test('a counter may end on a day (the last one counted) or after a number', () =
   const course = counter('rok: 2027\nlicznik: tygodnie od 7.06.2027 do 12 kurs');
   assert.equal(course.length, 12);
   assert.deepEqual(course.at(-1), [d27(8, 23), d27(8, 30), '12']);
+});
+
+test('where a counter starts: its name stands just before', () => {
+  const start = (text: string) => { const cal = parseCalendar(text, 'pl', 2026); return counterStart(cal.counters[0], calendarRange(cal)); };
+  assert.equal(start('rok: 2026\nod: 1.09\nlicznik: tygodnie od 1.09'), 0);
+  assert.equal(start('rok: 2027\nlicznik: tygodnie od 1.09'), epochDay(2027, 9, 1) - epochDay(2027, 1, 1));
+  assert.equal(start('rok: 2027\nlicznik: tygodnie od 7.06.2027 do 12'), epochDay(2027, 6, 7) - epochDay(2027, 1, 1));
+  assert.equal(start('rok: 2027\nlicznik: miesiące od 15.05.2020'), undefined);
 });
 
 test('counters read in both languages, with or without a name', () => {
