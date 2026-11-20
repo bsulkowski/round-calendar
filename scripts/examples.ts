@@ -8,10 +8,11 @@ import { EXAMPLE } from '../src/examples.ts';
 const sheets: [string, Lang, string][] = [
   ['school-year-2026-en', 'en', EXAMPLE.en],
   ['rok-szkolny-2026-pl', 'pl', EXAMPLE.pl],
-  ['rok-2027-pl', 'pl', `# Rok kalendarzowy z łączeniem na górze, wszystkie pierścienie.
+  ['rok-2027-pl', 'pl', `# Rok kalendarzowy z łączeniem na górze, wszystkie pierścienie i tygodnie roku od pierwszego poniedziałku.
 rok: 2027
 pierścienie: rok, pory roku, zodiak, miesiące
 strefa: +1
+licznik: tygodnie od 4.01.2027 tydzień roku
 `],
   ['wiosna-2027-pl', 'pl', `# Od pierwszego dnia wiosny do ostatniego dnia zimy; lato na górze, weekend w środku tygodnia.
 rok: 2027
@@ -19,6 +20,7 @@ od: wiosna
 góra: lato
 pierwszy dzień: śr
 strefa: +1
+licznik: tygodnie od 7.06.2027 do 12 kurs pływania
 `],
   ['sunday-first-2028-en', 'en', `# Weeks from Sunday, a leap year, January at the top.
 year: 2028

@@ -34,7 +34,7 @@ na kartce.
 | `góra: łączenie` | Co jest na górze koła: łączenie (domyślnie), środek pory roku (`zima`) albo miesiąca (`styczeń`), albo tydzień danego dnia (`1.09`). |
 | `pierwszy dzień: nd` | Dzień tygodnia na najbardziej wewnętrznym pierścieniu; następne idą na zewnątrz. Domyślnie poniedziałek. `śr` daje weekend w środku. |
 | `pierścienie: rok, pory roku, zodiak, miesiące` | Pasy wewnątrz pierścieni dni, od środka na zewnątrz. `rok` to koło pośrodku; `liczniki` ustawia miejsce liczników (bez tego stoją tuż wewnątrz miesięcy). Domyślnie rok, pory roku i miesiące. |
-| `licznik: tygodnie od 1.09 tygodnie szkolne` | Pas z tygodniami, miesiącami albo latami liczonymi od danego dnia: 1, 2, 3…, każdy numer nad dniami, które obejmuje, zmiana w dokładne dni. Dzień bez roku się powtarza: co roku liczy się od nowa od 1 (`od 1.01` daje tygodnie roku kalendarzowego). Z rokiem (`od 2024-06-15`) liczy dalej, jak wiek, a przed tym dniem nic nie pokazuje. Nazwa nie jest konieczna; stoi na łączeniu, w miejscu numerów, które zakrywa. Kilka linii `licznik` to kilka pasów. |
+| `licznik: tygodnie od 1.09 do 25.06 tygodnie szkolne` | Pas z tygodniami albo miesiącami liczonymi od danego dnia: 1, 2, 3…, każdy numer nad dniami, które obejmuje, zmiana w dokładne dni. Dzień bez roku się powtarza: co roku liczy się od nowa od 1. Z rokiem (`od 2027-05-03`) liczy dalej, a przed tym dniem nic nie pokazuje. `do` kończy licznik w dany dzień, ostatni liczony (`do 25.06`), albo po danym numerze (`do 40`); bez tego liczy do następnego początku albo do końca kalendarza. Tygodnie roku kalendarzowego zaczyna się od pierwszego poniedziałku (`od 4.01.2027`). Nazwa nie jest konieczna; stoi tuż przed łączeniem, w miejscu numerów, które zakrywa. Kilka linii `licznik` to kilka pasów. |
 | `strefa: +1` | Strefa czasowa dla dat równonocy i przesileń. Domyślnie UTC. |
 | `kolory: weekend=#eaeaea, linie=#c0c0c0` | Kolory pól weekendu i linii. |
 | `tytuł: A.D. 2027` | Napis w środku koła zamiast roku (albo `2026/2027` dla roku przechodzącego przez Nowy Rok). |
@@ -42,7 +42,7 @@ na kartce.
 | `format: 1` | Wersja formatu pliku. Zapis do pliku ją dodaje; plik bez niej to format 1. |
 
 Angielskie słowa kluczowe: `year`, `from`, `top`, `first day`, `rings`, `counter`, `timezone`, `colors`, `title`, `signature`;
-jednostki `weeks`, `months`, `years`.
+jednostki `weeks`, `months`; `to` albo `until` zamiast `do`.
 
 Tydzień biegnie wzdłuż promienia na zewnątrz i dalej do następnej kolumny, więc jego kolejność
 na promieniu to zawsze siedem dni po kolei; `pierwszy dzień` wybiera, od którego się zaczyna.

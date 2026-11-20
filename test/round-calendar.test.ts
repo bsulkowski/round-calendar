@@ -144,21 +144,51 @@ test('a day with a year counts on, and nothing before it', () => {
   const months = counter('rok: 2027\nlicznik: miesiące od 31.01.2027');
   const day = (m: number, d: number) => epochDay(2027, m, d) - epochDay(2027, 1, 1);
   assert.deepEqual(months.slice(0, 3), [[day(1, 31), day(2, 28), '1'], [day(2, 28), day(3, 31), '2'], [day(3, 31), day(4, 30), '3']]);
-  const years = counter('rok: 2027\nlicznik: lata od 2024-06-15 Ada');
-  assert.deepEqual(years, [[0, day(6, 15), '3'], [day(6, 15), 365, '4']]);
-  assert.deepEqual(counter('rok: 2027\nlicznik: lata od 2030-01-01'), []);
+  const longAgo = counter('rok: 2027\nlicznik: miesiące od 2024-06-15');
+  assert.deepEqual(longAgo[0], [0, day(1, 15), '31']);
+  assert.deepEqual(counter('rok: 2027\nlicznik: miesiące od 2030-01-01'), []);
+});
+
+test('a counter may end on a day (the last one counted) or after a number', () => {
+  const day = (y: number, m: number, d: number) => epochDay(y, m, d) - epochDay(2026, 9, 1);
+  // Weeks of a school year to the end of classes: the last week is cut after 25.06.
+  const school = counter('rok: 2026\nod: 1.09\nlicznik: tygodnie od 1.09 do 25.06');
+  assert.deepEqual(school.at(-1), [day(2027, 6, 22), day(2027, 6, 26), '43']);
+  // A day without a year repeats with its start: in a calendar year the count from last
+  // September runs to 25 June, and the next one starts on 1 September.
+  const y27 = counter('rok: 2027\nlicznik: tygodnie od 1.09 do 25.06');
+  const d27 = (m: number, d: number) => epochDay(2027, m, d) - epochDay(2027, 1, 1);
+  assert.deepEqual(y27[0], [0, d27(1, 5), '18']);
+  assert.deepEqual(y27.find((s) => s[2] === '43'), [d27(6, 22), d27(6, 26), '43']);
+  assert.deepEqual(y27.find((s) => s[0] > d27(6, 26)), [d27(9, 1), d27(9, 8), '1']);
+  // After a number: twelve weeks.
+  const course = counter('rok: 2027\nlicznik: tygodnie od 7.06.2027 do 12 kurs');
+  assert.equal(course.length, 12);
+  assert.deepEqual(course.at(-1), [d27(8, 23), d27(8, 30), '12']);
 });
 
 test('counters read in both languages, with or without a name', () => {
-  const pl = parseCalendar('licznik: tygodnie od 1.09 Rok szkolny\nlicznik: miesiące 15.03.2027', 'pl', 2026);
-  const en = parseCalendar('counter: weeks from 1.09 Rok szkolny\ncounter: months 15.03.2027', 'en', 2026);
+  const pl = parseCalendar([
+    'licznik: tygodnie od 1.09 Rok szkolny', 'licznik: miesiące 15.03.2027',
+    'licznik: tygodnie od 1.09 do 25.06 szkoła', 'licznik: tygodnie od 1.05.2027 do 40', 'licznik: tygodnie od 1.09 do wakacji',
+  ].join('\n'), 'pl', 2026);
+  const en = parseCalendar([
+    'counter: weeks from 1.09 Rok szkolny', 'counter: months 15.03.2027',
+    'counter: weeks from 1.09 to 25.06 szkoła', 'counter: weeks from 1.05.2027 until 40', 'counter: weeks from 1.09 do wakacji',
+  ].join('\n'), 'en', 2026);
   assert.deepEqual(pl.counters, en.counters);
   assert.deepEqual(pl.counters, [
     { unit: 'weeks', from: { y: undefined, m: 9, d: 1 }, name: 'Rok szkolny' },
     { unit: 'months', from: { y: 2027, m: 3, d: 15 }, name: '' },
+    { unit: 'weeks', from: { y: undefined, m: 9, d: 1 }, until: { kind: 'date', y: undefined, m: 6, d: 25 }, name: 'szkoła' },
+    { unit: 'weeks', from: { y: 2027, m: 5, d: 1 }, until: { kind: 'count', n: 40 }, name: '' },
+    { unit: 'weeks', from: { y: undefined, m: 9, d: 1 }, name: 'do wakacji' }, // not a date or a number: part of the name
   ]);
-  const bad = parseCalendar('licznik: dni od 1.01\nlicznik: tygodnie\nlicznik: tygodnie od 31.02', 'pl', 2026);
-  assert.deepEqual(bad.issues.map((i) => i.line), [1, 2, 3]);
+  const bad = parseCalendar([
+    'licznik: dni od 1.01', 'licznik: tygodnie', 'licznik: tygodnie od 31.02', 'licznik: lata od 1.01.2020',
+    'licznik: tygodnie od 1.09 do 31.06', 'licznik: tygodnie od 1.09.2027 do 1.08.2027',
+  ].join('\n'), 'pl', 2026);
+  assert.deepEqual(bad.issues.map((i) => i.line), [1, 2, 3, 4, 5, 6]);
   assert.deepEqual(bad.counters, []);
 });
 
@@ -191,7 +221,7 @@ test('every kind of year draws', () => {
   for (const y of [MIN_YEAR, 1900, 2000, 2023, 2024, 2026, 2027, 2028, 2100, MAX_YEAR]) {
     for (let d = 0; d < 7; d++) {
       const start = starts[(y + d) % starts.length], top = tops[(y * 3 + d) % tops.length];
-      const counters = d % 2 ? '\nlicznik: tygodnie od 1.01 Tydzień\nlicznik: miesiące od 15.05' : `\nlicznik: lata od 1.07.${y}`;
+      const counters = d % 2 ? '\nlicznik: tygodnie od 1.01 Tydzień\nlicznik: miesiące od 15.05' : `\nlicznik: tygodnie od 1.07.${y} do 40\nlicznik: miesiące od 1.09 do 30.06 Szkoła`;
       const text = `rok: ${y}\nod: ${start}\ngóra: ${top}\npierwszy dzień: ${days[d]}\npierścienie: rok, pory roku, zodiak, miesiące${counters}`;
       const cal = parseCalendar(text, 'pl', 2026);
       const svg = renderCalendar(cal, 'pl');

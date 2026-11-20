@@ -1,5 +1,6 @@
-# Rok kalendarzowy z łączeniem na górze, wszystkie pierścienie.
+# Rok kalendarzowy z łączeniem na górze, wszystkie pierścienie i tygodnie roku od pierwszego poniedziałku.
 format: 1
 rok: 2027
 pierścienie: rok, pory roku, zodiak, miesiące
 strefa: +1
+licznik: tygodnie od 4.01.2027 tydzień roku

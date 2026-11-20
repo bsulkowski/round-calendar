@@ -110,11 +110,13 @@ const ZODIAC_STARTS: [number, number][] = [
 
 export type Ring = 'year' | 'seasons' | 'zodiac' | 'counters' | 'months';
 
-/** A counter: weeks, months or years numbered from a day (1, 2, 3…), each number standing over
- * the days it holds. A day without a year repeats every year and the count starts again from 1
- * (weeks of a school year); with a year it is one day and the count runs on (age). */
-export type Unit = 'weeks' | 'months' | 'years';
-export interface Counter { unit: Unit; from: DayDate; name: string }
+/** A counter: weeks or months numbered from a day (1, 2, 3…), each number standing over the days
+ * it holds. A day without a year repeats every year and the count starts again from 1 (weeks of
+ * a school year); with a year it is one day and the count runs on. It may end on a day (the last
+ * one counted; without a year, the first such day after the start) or after a number (40). */
+export type Unit = 'weeks' | 'months';
+export type Until = ({ kind: 'date' } & DayDate) | { kind: 'count'; n: number };
+export interface Counter { unit: Unit; from: DayDate; until?: Until; name: string }
 
 /** A day of the year without its year (14.03), or with one (14.03.2027). */
 export interface DayDate { m: number; d: number; y?: number }
@@ -193,7 +195,6 @@ const RING_ALIAS: Record<string, Ring> = {
 const UNIT_ALIAS: Record<string, Unit> = {
   tygodnie: 'weeks', tydzień: 'weeks', tydzien: 'weeks', tyg: 'weeks', weeks: 'weeks', week: 'weeks',
   miesiące: 'months', miesiace: 'months', miesiąc: 'months', miesiac: 'months', mies: 'months', months: 'months', month: 'months',
-  lata: 'years', rok: 'years', lat: 'years', years: 'years', year: 'years',
 };
 
 const COLOR_ALIAS: Record<string, string> = { weekend: 'weekend', linie: 'lines', lines: 'lines' };
@@ -211,7 +212,8 @@ const MSG: Record<Lang, Record<string, string>> = {
     top: 'write seam, a season (winter), a month (january) or a date (1.09)',
     day: 'unknown day “{0}”',
     ring: 'unknown ring “{0}” (year, seasons, zodiac, counters, months)',
-    counter: 'write a counter as: weeks from 1.09 (a name if you like); weeks, months or years',
+    counter: 'write a counter as: weeks from 1.09, then if you like to 25.06 or to 40, and a name; weeks or months',
+    order: 'the end is before the start',
     tz: 'write a time zone as +1 or -5:30',
     color: 'write a colour as weekend=#hex or lines=#hex',
     date: 'there is no such date: {0}',
@@ -226,7 +228,8 @@ const MSG: Record<Lang, Record<string, string>> = {
     top: 'wpisz łączenie, porę roku (zima), miesiąc (styczeń) albo datę (1.09)',
     day: 'nieznany dzień „{0}”',
     ring: 'nieznany pierścień „{0}” (rok, pory roku, zodiak, liczniki, miesiące)',
-    counter: 'wpisz licznik jako: tygodnie od 1.09 (i ewentualnie nazwę); tygodnie, miesiące albo lata',
+    counter: 'wpisz licznik jako: tygodnie od 1.09, dalej ewentualnie do 25.06 albo do 40 i nazwa; tygodnie albo miesiące',
+    order: 'koniec jest przed początkiem',
     tz: 'wpisz strefę jako +1 albo -5:30',
     color: 'wpisz kolor jako weekend=#hex albo linie=#hex',
     date: 'nie ma takiej daty: {0}',
@@ -332,14 +335,30 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
         else cal.colors[name] = c[2];
       }
     } else if (key === 'counter') {
-      // weeks from 1.09 Name — "from" may be left out
-      const c = value.match(/^(\p{L}+)\s+(?:(?:od|from)\s+)?(\S+)(?:\s+(.*))?$/u);
-      const unit = c ? UNIT_ALIAS[c[1].toLowerCase()] : undefined;
-      const from = c ? parseDate(c[2]) : undefined;
-      if (!c || !unit || !from) issues.push({ line: n, message: say('counter') });
-      else if (!validDate(from)) issues.push({ line: n, message: say('date', showDate(from)) });
-      else if (from.y !== undefined && (from.y < MIN_YEAR || from.y > MAX_YEAR)) issues.push({ line: n, message: say('year') });
-      else cal.counters.push({ unit, from, name: (c[3] ?? '').trim() });
+      // weeks from 1.09 to 25.06 Name — "from" may be left out; "to" only before a date or a number,
+      // so a name may start with the word ("do wakacji").
+      const t = value.split(/\s+/);
+      let i = 1;
+      const unit = UNIT_ALIAS[t[0].toLowerCase()];
+      if (/^(od|from)$/i.test(t[i] ?? '')) i++;
+      const from = parseDate(t[i++] ?? '');
+      let until: Until | undefined;
+      if (/^(do|to|until)$/i.test(t[i] ?? '')) {
+        const v = t[i + 1] ?? '';
+        const date = parseDate(v);
+        if (date) until = { kind: 'date', ...date };
+        else if (/^\d+$/.test(v) && +v >= 1) until = { kind: 'count', n: +v };
+        if (until) i += 2;
+      }
+      const name = t.slice(i).join(' ');
+      const bad = [from, until?.kind === 'date' ? until : undefined].find((d) => d && !validDate(d));
+      const outOfYears = [from?.y, until?.kind === 'date' ? until.y : undefined].some((y) => y !== undefined && (y < MIN_YEAR || y > MAX_YEAR));
+      if (!unit || !from) issues.push({ line: n, message: say('counter') });
+      else if (bad) issues.push({ line: n, message: say('date', showDate(bad)) });
+      else if (outOfYears) issues.push({ line: n, message: say('year') });
+      else if (from.y !== undefined && until?.kind === 'date' && until.y !== undefined
+        && epochDay(until.y, until.m, until.d) < epochDay(from.y, from.m, from.d)) issues.push({ line: n, message: say('order') });
+      else cal.counters.push(until ? { unit, from, until, name } : { unit, from, name });
     } else if (key === 'title') {
       cal.title = value;
     } else if (key === 'signature') {
@@ -443,13 +462,15 @@ export function bandSegments(cal: Calendar, r: Range, band: Band, lang: Lang): S
   }));
 }
 
-/** The k-th boundary of a counter after its day (k = 0 is the day itself). A day missing from
- * a shorter month or year falls back to the month's last day (31.01 → 28.02, 29.02 → 28.02). */
+/** A day of a given year; one missing from a shorter month falls back to its last day (29.02 → 28.02). */
+const yearly = (y: number, m: number, d: number) => epochDay(y, m, Math.min(d, monthLengths(y)[m - 1]));
+
+/** The k-th boundary of a counter after its day (k = 0 is the day itself); months keep the day
+ * of the month where they can (31.01 → 28.02 → 31.03). */
 function counterStep(unit: Unit, { y, m, d }: Required<DayDate>, k: number): number {
   if (unit === 'weeks') return epochDay(y, m, d) + 7 * k;
-  const total = m - 1 + (unit === 'months' ? k : 12 * k);
-  const yy = y + Math.floor(total / 12), mm = (total % 12) + 1;
-  return epochDay(yy, mm, Math.min(d, monthLengths(yy)[mm - 1]));
+  const total = m - 1 + k;
+  return yearly(y + Math.floor(total / 12), (total % 12) + 1, d);
 }
 
 /** Stretches of a counter, numbered from 1 and cut at the ends of the range: unlike the other
@@ -459,22 +480,27 @@ export function counterSegments(c: Counter, r: Range): Segment[] {
   const [y0] = dateOf(r.start);
   // Days the count starts from: one, or the same day in each year around the range.
   const starts = c.from.y !== undefined ? [c.from.y] : [y0 - 1, y0, y0 + 1];
-  const marks: { at: number; value: number }[] = [];
+  const out: Segment[] = [];
   for (const y of starts) {
     const day = { y, m: c.from.m, d: c.from.d };
-    const until = c.from.y !== undefined ? end : Math.min(end, counterStep('years', day, 1));
+    const first = yearly(y, c.from.m, c.from.d);
+    // The count stops at the next start, at its end, or at the end of the range (exclusive).
+    let stop = c.from.y !== undefined ? end : Math.min(end, yearly(y + 1, c.from.m, c.from.d));
+    const u = c.until;
+    if (u?.kind === 'count') stop = Math.min(stop, counterStep(c.unit, day, u.n));
+    if (u?.kind === 'date') {
+      let last = u.y !== undefined ? epochDay(u.y, u.m, u.d) : yearly(y, u.m, u.d);
+      if (u.y === undefined && last < first) last = yearly(y + 1, u.m, u.d);
+      stop = Math.min(stop, last + 1);
+    }
     // Jump close to the range instead of counting up from a day long ago.
-    const per = c.unit === 'weeks' ? 7 : c.unit === 'months' ? 31 : 366;
-    let k = Math.max(0, Math.floor((r.start - counterStep(c.unit, day, 0)) / per) - 1);
-    for (let b = counterStep(c.unit, day, k); b < until; b = counterStep(c.unit, day, ++k)) marks.push({ at: b, value: k + 1 });
+    let k = Math.max(0, Math.floor((r.start - first) / (c.unit === 'weeks' ? 7 : 31)) - 1);
+    for (let a = counterStep(c.unit, day, k); a < stop; a = counterStep(c.unit, day, ++k)) {
+      const from = Math.max(a, r.start), to = Math.min(counterStep(c.unit, day, k + 1), stop);
+      if (to > from) out.push({ from: from - r.start, to: to - r.start, label: String(k + 1), key: k + 1 });
+    }
   }
-  marks.sort((a, b) => a.at - b.at);
-  const out: Segment[] = [];
-  marks.forEach((x, i) => {
-    const from = Math.max(x.at, r.start), to = Math.min(i + 1 < marks.length ? marks[i + 1].at : end, end);
-    if (to > from) out.push({ from: from - r.start, to: to - r.start, label: String(x.value), key: x.value });
-  });
-  return out;
+  return out.sort((a, b) => a.from - b.from);
 }
 
 export interface Layout {
@@ -603,12 +629,16 @@ export function renderCalendar(cal: Calendar, lang: Lang): string {
     return `<text transform="translate(${P(a, r)}) rotate(${r2(rot)})" y="${r2(size * 0.35)}" font-size="${r2(size)}" font-weight="${weight}" text-anchor="middle" fill="${esc(fill)}">${esc(s)}</text>`;
   };
   let pathId = 0;
+  // Text along an arc, centred on radius r. The baseline is moved off r by the path itself, not by
+  // `dy`, which renderers apply to text on a path differently: inwards in the upper half, where the
+  // letters stand with their tops outwards, and outwards in the lower half, where the path is turned.
   const arcText = (a0: number, a1: number, r: number, s: string, size: number, fill: string) => {
     const id = `rc-arc-${++pathId}`;
     const lower = Math.sin(rad((a0 + a1) / 2)) > 0;
-    const d = lower ? `M ${P(a1, r)} ${arcTo(a1, a0, r)}` : `M ${P(a0, r)} ${arcTo(a0, a1, r)}`;
+    const rb = lower ? r + size * 0.35 : r - size * 0.35;
+    const d = lower ? `M ${P(a1, rb)} ${arcTo(a1, a0, rb)}` : `M ${P(a0, rb)} ${arcTo(a0, a1, rb)}`;
     return `<path id="${id}" d="${d}" fill="none"/>` +
-      `<text font-size="${r2(size)}" font-weight="700" fill="${esc(fill)}" dy="${r2(size * 0.35)}">` +
+      `<text font-size="${r2(size)}" font-weight="700" fill="${esc(fill)}">` +
       `<textPath href="#${id}" xlink:href="#${id}" startOffset="50%" text-anchor="middle">${esc(s)}</textPath></text>`;
   };
 
@@ -694,17 +724,17 @@ export function renderCalendar(cal: Calendar, lang: Lang): string {
       return;
     }
     // A counter: numbers of one size, each over its stretch, left out where they do not fit.
-    // The name, if any, stands on the seam and takes the place of the numbers it covers.
+    // The name, if any, stands just before the seam and takes the place of the numbers it covers.
     const f = Math.min(b.font, (ro - ri) * 0.62);
     const deg = (len: number) => (len / r) * (180 / Math.PI);
-    const seam = base + step / 2;
     const nameHalf = b.name ? deg(textWidth(b.name, f) / 2 + f * 0.6) : 0;
-    if (b.name) o.push(arcText(seam - nameHalf, seam + nameHalf, r, b.name, f, b.ink));
+    const nameMid = base - nameHalf;
+    if (b.name) o.push(arcText(nameMid - nameHalf, nameMid + nameHalf, r, b.name, f, b.ink));
     for (const s of b.segs) {
       const [a0, a1] = segAngles(s);
       const w = textWidth(s.label, f);
       if (w > rad(a1 - a0) * r * 0.9) continue;
-      if (b.name && angDist((a0 + a1) / 2, seam) < nameHalf + deg(w / 2 + f * 0.4)) continue;
+      if (b.name && angDist((a0 + a1) / 2, nameMid) < nameHalf + deg(w / 2 + f * 0.4)) continue;
       o.push(arcText(a0, a1, r, s.label, f, b.ink));
     }
   });

@@ -33,7 +33,7 @@ be written in English or in Polish — only the names on the sheet follow the la
 | `top: seam` | What is at the top of the disc: the seam (the default), the middle of a season (`winter`) or of a month (`january`), or the week of a day (`1.09`). |
 | `first day: sun` | The weekday of the innermost ring; the others follow outwards. Monday by default. `wed` puts the weekend in the middle. |
 | `rings: year, seasons, zodiac, months` | The bands inside the weekday rings, from the centre outwards. `year` is the disc in the middle; `counters` sets where the counters go (else just inside the months). By default year, seasons and months. |
-| `counter: weeks from 1.09 school weeks` | A band with weeks, months or years numbered from a day: 1, 2, 3…, each number over the days it holds, changing on exact days. A day without a year repeats: the count starts again from 1 each year (`from 1.01` gives the weeks of the calendar year). With a year (`from 2024-06-15`) it runs on, like an age, and shows nothing before that day. The name is optional; it stands on the seam, in place of the numbers it covers. Several `counter` lines give several bands. |
+| `counter: weeks from 1.09 to 25.06 school weeks` | A band with weeks or months numbered from a day: 1, 2, 3…, each number over the days it holds, changing on exact days. A day without a year repeats: the count starts again from 1 each year. With a year (`from 2027-05-03`) it runs on and shows nothing before that day. `to` ends it on a day, the last one counted (`to 25.06`), or after a number (`to 40`); without it the count runs to the next start or the end of the calendar. Weeks of the calendar year start on its first Monday (`from 4.01.2027`). The name is optional; it stands just before the seam, in place of the numbers it covers. Several `counter` lines give several bands. |
 | `timezone: +1` | The time zone for the dates of equinoxes and solstices. UTC by default. |
 | `colors: weekend=#eaeaea, lines=#c0c0c0` | Colours of the weekend cells and of the lines. |
 | `title: A.D. 2027` | The text in the middle of the disc instead of the year (or of `2026/2027` for a year that crosses New Year). |
@@ -41,7 +41,7 @@ be written in English or in Polish — only the names on the sheet follow the la
 | `format: 1` | The version of the file format. Saving a file adds it; a file without it is format 1. |
 
 Polish keywords: `rok`, `od`, `góra`, `pierwszy dzień`, `pierścienie`, `licznik`, `strefa`, `kolory`, `tytuł`, `podpis`;
-units `tygodnie`, `miesiące`, `lata`.
+units `tygodnie`, `miesiące`; `do` for `to`.
 
 The week runs outwards along the radius and on into the next column, so its order on the radius
 is always the seven days in sequence; `first day` chooses where the sequence starts.

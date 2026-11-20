@@ -5,3 +5,4 @@ od: wiosna
 góra: lato
 pierwszy dzień: śr
 strefa: +1
+licznik: tygodnie od 7.06.2027 do 12 kurs pływania
