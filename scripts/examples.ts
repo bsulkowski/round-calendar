@@ -30,7 +30,7 @@ weekdays: inwards
 top: january
 title: A.D.
 title: 2028
-inside: 45%
+inside: 40%
 `],
 ];
 

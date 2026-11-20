@@ -225,8 +225,11 @@ const NONE = new Set(['brak', 'none', '-']);
  * radius, in %: the default and the largest. It keeps the months and the days in place whatever
  * bands are chosen.
  */
-export const DEFAULT_INSIDE = 35;
-export const MAX_INSIDE = 80;
+export const INSIDE_STEPS = [25, 32, 40, 50]; // Human Scale Numbers, about ×1.25 apart
+export const DEFAULT_INSIDE = 32;
+/** The step nearest to a number (by ratio), so any size reads as one of the steps. */
+const nearestInside = (v: number) =>
+  INSIDE_STEPS.reduce((a, b) => (Math.abs(Math.log(b / v)) < Math.abs(Math.log(a / v)) ? b : a));
 
 const MSG: Record<Lang, Record<string, string>> = {
   en: {
@@ -243,7 +246,7 @@ const MSG: Record<Lang, Record<string, string>> = {
     order: 'the end is before the start',
     tz: 'write a time zone as +1 or -5:30',
     color: 'write a colour as weekend=#hex or lines=#hex',
-    inside: 'write the size of the inside as a share of the radius, 0–' + MAX_INSIDE + '% (' + DEFAULT_INSIDE + '%)',
+    inside: 'write the size of the inside as a share of the radius: ' + INSIDE_STEPS.join('%, ') + '%',
     date: 'there is no such date: {0}',
     outside: '{0} is not in this calendar ({1}–{2})',
     format: 'these settings were saved in format {0}, newer than this page knows (1); they may not show as intended',
@@ -262,7 +265,7 @@ const MSG: Record<Lang, Record<string, string>> = {
     order: 'koniec jest przed początkiem',
     tz: 'wpisz strefę jako +1 albo -5:30',
     color: 'wpisz kolor jako weekend=#hex albo linie=#hex',
-    inside: 'wpisz wielkość wnętrza jako część promienia, 0–' + MAX_INSIDE + '% (' + DEFAULT_INSIDE + '%)',
+    inside: 'wpisz wielkość wnętrza jako część promienia: ' + INSIDE_STEPS.join('%, ') + '%',
     date: 'nie ma takiej daty: {0}',
     outside: '{0} nie wypada w tym kalendarzu ({1}–{2})',
     format: 'ustawienia zapisano w formacie {0}, nowszym niż zna ta strona (1); mogą wyglądać inaczej, niż zamierzono',
@@ -405,7 +408,7 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
     } else if (key === 'inside') {
       const g = low.match(/^(\d+(?:[.,]\d+)?)\s*%?$/);
       const v = g ? Number(g[1].replace(',', '.')) : NaN;
-      if (v >= 0 && v <= MAX_INSIDE) cal.inside = v;
+      if (v > 0) cal.inside = nearestInside(v);
       else issues.push({ line: n, message: say('inside') });
     } else if (key === 'signature') {
       cal.signature.push(value);
