@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   seasonMoment, parseCalendar, renderCalendar, calendarRange, layoutCalendar, counterSegments, counterStart, dateOf, epochDay, weekday,
-  withFormatLine, MIN_YEAR, MAX_YEAR,
+  withFormatLine, formatCalendar, MIN_YEAR, MAX_YEAR,
 } from '../src/round-calendar.ts';
 import { EXAMPLE } from '../src/examples.ts';
 
@@ -215,11 +215,11 @@ test('counters read in both languages, with or without a name', () => {
   ].join('\n'), 'en', 2026);
   assert.deepEqual(pl.counters, en.counters);
   assert.deepEqual(pl.counters, [
-    { unit: 'weeks', from: { y: undefined, m: 9, d: 1 }, name: 'Rok szkolny' },
+    { unit: 'weeks', from: { m: 9, d: 1 }, name: 'Rok szkolny' },
     { unit: 'months', from: { y: 2027, m: 3, d: 15 }, name: '' },
-    { unit: 'weeks', from: { y: undefined, m: 9, d: 1 }, until: { kind: 'date', y: undefined, m: 6, d: 25 }, name: 'szkoła' },
+    { unit: 'weeks', from: { m: 9, d: 1 }, until: { kind: 'date', m: 6, d: 25 }, name: 'szkoła' },
     { unit: 'weeks', from: { y: 2027, m: 5, d: 1 }, until: { kind: 'count', n: 40 }, name: '' },
-    { unit: 'weeks', from: { y: undefined, m: 9, d: 1 }, name: 'do wakacji' }, // not a date or a number: part of the name
+    { unit: 'weeks', from: { m: 9, d: 1 }, name: 'do wakacji' }, // not a date or a number: part of the name
   ]);
   const bad = parseCalendar([
     'licznik: dni od 1.01', 'licznik: tygodnie', 'licznik: tygodnie od 31.02', 'licznik: lata od 1.01.2020',
@@ -267,4 +267,21 @@ test('every kind of year draws', () => {
       assert.ok(!svg.includes('NaN'), `${text}: NaN`);
     }
   }
+});
+
+test('settings written as text read back the same, in either language', () => {
+  const texts = [
+    EXAMPLE.en, EXAMPLE.pl, '',
+    'rok: 2027\nod: wiosna\ngóra: lato\npierwszy dzień: śr\nkierunek: przeciwnie\ndni tygodnia: do środka\npierścienie: brak',
+    'year: 2028\ntop: january\nrings: counters, zodiac, seasons\ncounter: months from 31.01.2028 to 12\ncounter: weeks from 4.01.2027 week\ntimezone: -5:30',
+    'rok: 2026\nod: 1.09.2027\ngóra: 15.03.2028\nkolory: weekend=#eee, linie=#123456\ntytuł: A.D. 2027\npodpis: jeden\npodpis: dwa',
+  ];
+  for (const text of texts) {
+    const cal = parseCalendar(text, 'pl', 2026);
+    for (const lang of ['pl', 'en'] as const) {
+      const again = parseCalendar(formatCalendar(cal, lang), lang === 'pl' ? 'en' : 'pl', 2026);
+      assert.deepEqual(again, cal, `${lang}: ${text}`);
+    }
+  }
+  assert.equal(formatCalendar(parseCalendar('', 'pl', 2026), 'pl'), 'rok: 2026\n');
 });

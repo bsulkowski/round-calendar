@@ -73,12 +73,13 @@ One TypeScript module, [`src/round-calendar.ts`](src/round-calendar.ts), with no
 no DOM access. It runs in the browser and in Node ≥ 22.12 (with `--experimental-strip-types`).
 
 ```ts
-import { parseCalendar, renderCalendar, calendarRange, withFormatLine } from 'round-calendar';
+import { parseCalendar, renderCalendar, calendarRange, formatCalendar, withFormatLine } from 'round-calendar';
 import { EXAMPLE } from 'round-calendar/examples';
 
 const cal = parseCalendar(EXAMPLE.en, 'en', new Date().getFullYear()); // settings, cal.issues
 calendarRange(cal);                     // { start, days }: the first day (days since 1970-01-01) and how many
 const svg = renderCalendar(cal, 'en');  // <svg …> 210 × 297 mm
+formatCalendar(cal, 'en');              // the settings as text again: the year, then what differs from the defaults
 withFormatLine(text);                   // the text with a `format: 1` line, as saved to a file
 ```
 

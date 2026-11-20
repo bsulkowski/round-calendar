@@ -75,12 +75,13 @@ Jeden moduł TypeScript, [`src/round-calendar.ts`](src/round-calendar.ts), bez z
 dostępu do DOM. Działa w przeglądarce i w Node ≥ 22.12 (z `--experimental-strip-types`).
 
 ```ts
-import { parseCalendar, renderCalendar, calendarRange, withFormatLine } from 'round-calendar';
+import { parseCalendar, renderCalendar, calendarRange, formatCalendar, withFormatLine } from 'round-calendar';
 import { EXAMPLE } from 'round-calendar/examples';
 
 const cal = parseCalendar(EXAMPLE.pl, 'pl', new Date().getFullYear()); // ustawienia, cal.issues
 calendarRange(cal);                     // { start, days }: pierwszy dzień (dni od 1970-01-01) i ile dni
 const svg = renderCalendar(cal, 'pl');  // <svg …> 210 × 297 mm
+formatCalendar(cal, 'pl');              // ustawienia znów jako tekst: rok, potem to, co różni się od domyślnych
 withFormatLine(text);                   // tekst z linią `format: 1`, tak jak przy zapisie do pliku
 ```
 

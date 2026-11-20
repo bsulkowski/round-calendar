@@ -264,7 +264,8 @@ const RE_DATE = /^(?:(\d{4})-(\d{1,2})-(\d{1,2})|(\d{1,2})\.(\d{1,2})(?:\.(\d{4}
 function parseDate(v: string): DayDate | undefined {
   const g = v.match(RE_DATE);
   if (!g) return undefined;
-  return g[1] ? { y: +g[1], m: +g[2], d: +g[3] } : { y: g[6] ? +g[6] : undefined, m: +g[5], d: +g[4] };
+  if (g[1]) return { y: +g[1], m: +g[2], d: +g[3] };
+  return g[6] ? { y: +g[6], m: +g[5], d: +g[4] } : { m: +g[5], d: +g[4] };
 }
 
 /** Whether the date exists; without a year, 29.02 counts as existing. */
@@ -401,7 +402,8 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
   const s = cal.start;
   if (s.kind === 'date' && s.y !== undefined) {
     if (s.y < MIN_YEAR || s.y > MAX_YEAR) { issues.push({ line: startLine, message: say('year') }); cal.start = { kind: 'date', m: s.m, d: s.d }; }
-    else cal.year = s.y; // a full date sets the year
+    else cal.year = s.y; // a full date sets the year; the start keeps only the day
+    cal.start = { kind: 'date', m: s.m, d: s.d };
   }
   if (s.kind === 'date' && !validDate({ ...s, y: cal.year })) {
     issues.push({ line: startLine, message: say('date', showDate({ ...s, y: cal.year })) });
@@ -442,6 +444,69 @@ export function occurrence(r: Range, { m, d, y }: DayDate): number | undefined {
     if (mm === m && e >= r.start && e < r.start + r.days) return e - r.start;
   }
   return undefined;
+}
+
+/* ---------- writing settings ---------- */
+
+/** Names the form and the written settings use, in the language of the page. */
+export function names(lang: Lang) {
+  return { months: MONTHS[lang], seasons: SEASONS[lang], weekdays: WEEKDAYS[lang] };
+}
+
+export { parseDate, validDate, showDate };
+
+const WORDS: Record<Lang, Record<string, string>> = {
+  en: {
+    year: 'year', start: 'from', top: 'top', firstDay: 'first day', direction: 'direction', weekdays: 'weekdays',
+    rings: 'rings', counter: 'counter', tz: 'timezone', colors: 'colors', title: 'title', signature: 'signature',
+    seam: 'seam', anticlockwise: 'anticlockwise', inwards: 'inwards', none: 'none', from: 'from', to: 'to',
+    weeks: 'weeks', months: 'months', seasons: 'seasons', zodiac: 'zodiac', counters: 'counters', lines: 'lines',
+  },
+  pl: {
+    year: 'rok', start: 'od', top: 'góra', firstDay: 'pierwszy dzień', direction: 'kierunek', weekdays: 'dni tygodnia',
+    rings: 'pierścienie', counter: 'licznik', tz: 'strefa', colors: 'kolory', title: 'tytuł', signature: 'podpis',
+    seam: 'łączenie', anticlockwise: 'przeciwnie do zegara', inwards: 'do środka', none: 'brak', from: 'od', to: 'do',
+    weeks: 'tygodnie', months: 'miesiące', seasons: 'pory roku', zodiac: 'zodiak', counters: 'liczniki', lines: 'linie',
+  },
+};
+const DAY_WORDS: Record<Lang, string[]> = {
+  en: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
+  pl: ['pn', 'wt', 'śr', 'cz', 'pt', 'sb', 'nd'],
+};
+
+/**
+ * Settings as text, in the words of a language: the year, then only what differs from the
+ * defaults. Reads back to the same calendar (`parseCalendar(formatCalendar(cal))`); comments
+ * and the order of the original lines are not kept.
+ */
+export function formatCalendar(cal: Calendar, lang: Lang): string {
+  const w = WORDS[lang];
+  const lines: string[] = [`${w.year}: ${cal.year}`];
+  const put = (key: string, value: string) => lines.push(`${w[key]}: ${value}`);
+  const st = cal.start;
+  if (st.kind === 'season') put('start', SEASONS[lang][st.which]);
+  else if (st.m !== 1 || st.d !== 1) put('start', showDate({ m: st.m, d: st.d }));
+  const t = cal.top;
+  if (t.kind === 'season') put('top', SEASONS[lang][t.which]);
+  else if (t.kind === 'month') put('top', MONTHS[lang][t.m - 1]);
+  else if (t.kind === 'date') put('top', showDate(t));
+  if (cal.firstDay !== 0) put('firstDay', DAY_WORDS[lang][cal.firstDay]);
+  if (!cal.clockwise) put('direction', w.anticlockwise);
+  if (!cal.outwards) put('weekdays', w.inwards);
+  if (cal.rings.length !== 1 || cal.rings[0] !== 'seasons') put('rings', cal.rings.length ? cal.rings.map((r) => w[r]).join(', ') : w.none);
+  for (const c of cal.counters) {
+    const until = !c.until ? '' : ` ${w.to} ${c.until.kind === 'count' ? c.until.n : showDate(c.until)}`;
+    put('counter', `${w[c.unit]} ${w.from} ${showDate(c.from)}${until}${c.name ? ' ' + c.name : ''}`);
+  }
+  if (cal.tz !== 0) {
+    const a = Math.abs(cal.tz);
+    put('tz', `${cal.tz < 0 ? '-' : '+'}${Math.floor(a / 60)}${a % 60 ? ':' + String(a % 60).padStart(2, '0') : ''}`);
+  }
+  const colors = Object.entries(cal.colors).map(([k, v]) => `${k === 'lines' ? w.lines : k}=${v}`);
+  if (colors.length) put('colors', colors.join(', '));
+  if (cal.title) put('title', cal.title);
+  for (const s of cal.signature) put('signature', s);
+  return lines.join('\n') + '\n';
 }
 
 // Saved files carry their format, so a later page can tell old files from new ones.
