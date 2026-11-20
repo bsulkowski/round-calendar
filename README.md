@@ -40,12 +40,12 @@ be written in English or in Polish — only the names on the sheet follow the la
 | `timezone: +1` | The time zone for the dates of equinoxes and solstices. UTC by default. |
 | `colors: weekend=#eaeaea, lines=#c0c0c0` | Colours of the weekend cells and of the lines. |
 | `title: A.D. 2027` | The text in the middle of the disc instead of the year (or of `2026/2027` for a year that crosses New Year). Several `title` lines give several rows; `title: none` leaves the middle empty. The text is sized to fit. |
-| `centre: 35%` | The size of the middle: its radius as a share of the disc's radius, from `0` (no middle, the bands reach the centre) to `80%`. 25% by default. |
+| `inside: 45%` | The size of everything inside the months — the year and the bands — as a share of the disc's radius, from `0` to `80%`; 35% by default. The months and the days do not move when bands are added or removed: the bands share the inside. |
 | `signature: The Smiths’ year` | A line in the bottom-right corner; several lines give several rows. |
 | `format: 1` | The version of the file format. Saving a file adds it; a file without it is format 1. |
 
 Polish keywords: `rok`, `od`, `góra`, `pierwszy dzień`, `kierunek` (`zgodnie z zegarem`, `przeciwnie do zegara`),
-`dni tygodnia` (`od środka`, `do środka`), `pierścienie`, `licznik`, `strefa`, `kolory`, `tytuł`, `środek`, `podpis`;
+`dni tygodnia` (`od środka`, `do środka`), `pierścienie`, `licznik`, `strefa`, `kolory`, `tytuł`, `wnętrze`, `podpis`;
 units `tygodnie`, `miesiące`; `do` for `to`.
 
 The week runs along the radius and on into the next column, so its order on the radius is always

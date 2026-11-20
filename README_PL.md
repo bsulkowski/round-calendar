@@ -41,12 +41,12 @@ na kartce.
 | `strefa: +1` | Strefa czasowa dla dat równonocy i przesileń. Domyślnie UTC. |
 | `kolory: weekend=#eaeaea, linie=#c0c0c0` | Kolory pól weekendu i linii. |
 | `tytuł: A.D. 2027` | Napis w środku koła zamiast roku (albo `2026/2027` dla roku przechodzącego przez Nowy Rok). Kilka linii `tytuł` to kilka wierszy; `tytuł: brak` zostawia środek pusty. Wielkość liter dopasowuje się do miejsca. |
-| `środek: 35%` | Wielkość środka: jego promień jako część promienia koła, od `0` (bez środka, pasy sięgają samego środka) do `80%`. Domyślnie 25%. |
+| `wnętrze: 45%` | Wielkość wszystkiego wewnątrz miesięcy — roku i pasów — jako część promienia koła, od `0` do `80%`; domyślnie 35%. Miesiące i dni nie ruszają się, gdy przybywa albo ubywa pasów: pasy dzielą się wnętrzem. |
 | `podpis: Rok Nowaków` | Linijka w prawym dolnym rogu; kilka takich linii to kilka wierszy. |
 | `format: 1` | Wersja formatu pliku. Zapis do pliku ją dodaje; plik bez niej to format 1. |
 
 Angielskie słowa kluczowe: `year`, `from`, `top`, `first day`, `direction` (`clockwise`, `anticlockwise`),
-`weekdays` (`outwards`, `inwards`), `rings`, `counter`, `timezone`, `colors`, `title`, `centre`, `signature`;
+`weekdays` (`outwards`, `inwards`), `rings`, `counter`, `timezone`, `colors`, `title`, `inside`, `signature`;
 jednostki `weeks`, `months`; `to` albo `until` zamiast `do`.
 
 Tydzień biegnie wzdłuż promienia i dalej do następnej kolumny, więc jego kolejność na promieniu

@@ -149,7 +149,7 @@ export interface Calendar {
   tz: number; // minutes east of UTC, for the dates of equinoxes and solstices
   colors: Record<string, string>; // 'weekend', 'lines'
   title: string[] | null; // lines of text in the centre; [] = the year, null = no text
-  centre: number; // radius of the centre, in % of the disc's radius
+  inside: number; // radius of everything inside the months band, in % of the disc's radius
   signature: string[];
   issues: Issue[];
 }
@@ -166,7 +166,7 @@ const KEYS: Record<string, string> = {
   strefa: 'tz', 'strefa czasowa': 'tz', timezone: 'tz', 'time zone': 'tz',
   kolory: 'colors', colors: 'colors', colours: 'colors',
   tytuł: 'title', tytul: 'title', title: 'title',
-  środek: 'centre', srodek: 'centre', centre: 'centre', center: 'centre',
+  wnętrze: 'inside', wnetrze: 'inside', inside: 'inside',
   podpis: 'signature', signature: 'signature',
   licznik: 'counter', counter: 'counter',
   format: 'format',
@@ -220,9 +220,13 @@ export const DEFAULT_COLORS: Record<string, string> = { weekend: '#eaeaea', line
 
 const NONE = new Set(['brak', 'none', '-']);
 
-/** The centre's radius as a share of the disc's radius, in %: the default and the largest. */
-export const DEFAULT_CENTRE = 25;
-export const MAX_CENTRE = 80;
+/**
+ * The radius of the inside — the year and the bands inside the months — as a share of the disc's
+ * radius, in %: the default and the largest. It keeps the months and the days in place whatever
+ * bands are chosen.
+ */
+export const DEFAULT_INSIDE = 35;
+export const MAX_INSIDE = 80;
 
 const MSG: Record<Lang, Record<string, string>> = {
   en: {
@@ -239,7 +243,7 @@ const MSG: Record<Lang, Record<string, string>> = {
     order: 'the end is before the start',
     tz: 'write a time zone as +1 or -5:30',
     color: 'write a colour as weekend=#hex or lines=#hex',
-    centre: 'write the size of the centre as a share of the radius, 0–' + MAX_CENTRE + '% (25%)',
+    inside: 'write the size of the inside as a share of the radius, 0–' + MAX_INSIDE + '% (' + DEFAULT_INSIDE + '%)',
     date: 'there is no such date: {0}',
     outside: '{0} is not in this calendar ({1}–{2})',
     format: 'these settings were saved in format {0}, newer than this page knows (1); they may not show as intended',
@@ -258,7 +262,7 @@ const MSG: Record<Lang, Record<string, string>> = {
     order: 'koniec jest przed początkiem',
     tz: 'wpisz strefę jako +1 albo -5:30',
     color: 'wpisz kolor jako weekend=#hex albo linie=#hex',
-    centre: 'wpisz wielkość środka jako część promienia, 0–' + MAX_CENTRE + '% (25%)',
+    inside: 'wpisz wielkość wnętrza jako część promienia, 0–' + MAX_INSIDE + '% (' + DEFAULT_INSIDE + '%)',
     date: 'nie ma takiej daty: {0}',
     outside: '{0} nie wypada w tym kalendarzu ({1}–{2})',
     format: 'ustawienia zapisano w formacie {0}, nowszym niż zna ta strona (1); mogą wyglądać inaczej, niż zamierzono',
@@ -302,7 +306,7 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
     tz: 0,
     colors: {},
     title: [],
-    centre: DEFAULT_CENTRE,
+    inside: DEFAULT_INSIDE,
     signature: [],
     issues,
   };
@@ -398,11 +402,11 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
       // Each line is a row of text; "none" leaves the centre empty, and rows after it start anew.
       if (NONE.has(low)) cal.title = null;
       else if (value) cal.title = [...(cal.title ?? []), value];
-    } else if (key === 'centre') {
+    } else if (key === 'inside') {
       const g = low.match(/^(\d+(?:[.,]\d+)?)\s*%?$/);
       const v = g ? Number(g[1].replace(',', '.')) : NaN;
-      if (v >= 0 && v <= MAX_CENTRE) cal.centre = v;
-      else issues.push({ line: n, message: say('centre') });
+      if (v >= 0 && v <= MAX_INSIDE) cal.inside = v;
+      else issues.push({ line: n, message: say('inside') });
     } else if (key === 'signature') {
       cal.signature.push(value);
     } else if (key === 'format') {
@@ -474,13 +478,13 @@ export { parseDate, validDate, showDate };
 const WORDS: Record<Lang, Record<string, string>> = {
   en: {
     year: 'year', start: 'from', top: 'top', firstDay: 'first day', direction: 'direction', weekdays: 'weekdays',
-    rings: 'rings', counter: 'counter', tz: 'timezone', colors: 'colors', title: 'title', centre: 'centre', signature: 'signature',
+    rings: 'rings', counter: 'counter', tz: 'timezone', colors: 'colors', title: 'title', inside: 'inside', signature: 'signature',
     seam: 'seam', anticlockwise: 'anticlockwise', inwards: 'inwards', none: 'none', from: 'from', to: 'to',
     weeks: 'weeks', months: 'months', seasons: 'seasons', zodiac: 'zodiac', counters: 'counters', lines: 'lines',
   },
   pl: {
     year: 'rok', start: 'od', top: 'góra', firstDay: 'pierwszy dzień', direction: 'kierunek', weekdays: 'dni tygodnia',
-    rings: 'pierścienie', counter: 'licznik', tz: 'strefa', colors: 'kolory', title: 'tytuł', centre: 'środek', signature: 'podpis',
+    rings: 'pierścienie', counter: 'licznik', tz: 'strefa', colors: 'kolory', title: 'tytuł', inside: 'wnętrze', signature: 'podpis',
     seam: 'łączenie', anticlockwise: 'przeciwnie do zegara', inwards: 'do środka', none: 'brak', from: 'od', to: 'do',
     weeks: 'tygodnie', months: 'miesiące', seasons: 'pory roku', zodiac: 'zodiak', counters: 'liczniki', lines: 'linie',
   },
@@ -522,7 +526,7 @@ export function formatCalendar(cal: Calendar, lang: Lang): string {
   if (colors.length) put('colors', colors.join(', '));
   if (cal.title === null) put('title', w.none);
   else for (const t of cal.title) put('title', t);
-  if (cal.centre !== DEFAULT_CENTRE) put('centre', `${cal.centre}%`);
+  if (cal.inside !== DEFAULT_INSIDE) put('inside', `${cal.inside}%`);
   for (const s of cal.signature) put('signature', s);
   return lines.join('\n') + '\n';
 }
@@ -722,11 +726,16 @@ export function renderCalendar(cal: Calendar, lang: Lang): string {
       start: L.counterStarts[i],
     }))
     : [{ kind: r, segs: L.segments[r]!, size: BELT_SIZE[r], font: BELT_FONT[r], ink: BELT_INK[r], name: '' }]));
-  // The centre is a share of the radius, so its part of the area is f² of the whole.
-  const rest = bands.reduce((s, b) => s + b.size, 0) + 7;
-  const fc = cal.centre / 100;
-  const centre = (fc * fc * rest) / (1 - fc * fc);
-  const total = centre + rest;
+  // The months and the days have fixed parts of the area; the inside (the year and the bands
+  // within the months) takes g² of the whole, shared in proportion to the usual sizes. So the
+  // months and the days stay in place whatever bands are chosen.
+  const outside = BELT_SIZE.months + 7;
+  const g = cal.inside / 100;
+  const total = outside / (1 - g * g);
+  const inner = bands.slice(0, -1);
+  const share = (g * g * total) / (BELT_SIZE.year + inner.reduce((s, b) => s + b.size, 0));
+  for (const b of inner) b.size *= share;
+  const centre = BELT_SIZE.year * share;
   const R = W / 2 - M;
   const cx = W / 2;
   const cy = H / 2;
@@ -863,6 +872,7 @@ export function renderCalendar(cal: Calendar, lang: Lang): string {
     // of the numbers it covers. A counter that starts with the calendar, or before it, has its
     // name just before the seam.
     const f = Math.min(b.font, (ro - ri) * 0.62);
+    if (f < 4) return;
     const deg = (len: number) => (len / r) * (180 / Math.PI);
     const nameHalf = b.name ? deg(textWidth(b.name, f) / 2 + f * 0.6) : 0;
     const nameMid = (b.start ? dayAngle(b.start) : A(0)) - turn * nameHalf;

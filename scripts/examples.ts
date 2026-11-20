@@ -22,7 +22,7 @@ pierwszy dzień: śr
 strefa: +1
 licznik: tygodnie od 7.06.2027 do 12 kurs pływania
 `],
-  ['sunday-first-2028-en', 'en', `# Weeks from Sunday, anticlockwise and inwards, a leap year, January at the top, a larger centre with two rows.
+  ['sunday-first-2028-en', 'en', `# Weeks from Sunday, anticlockwise and inwards, a leap year, January at the top, a larger inside, two rows in the centre.
 year: 2028
 first day: sun
 direction: anticlockwise
@@ -30,7 +30,7 @@ weekdays: inwards
 top: january
 title: A.D.
 title: 2028
-centre: 35%
+inside: 45%
 `],
 ];
 
