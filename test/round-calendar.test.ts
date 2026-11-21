@@ -39,13 +39,15 @@ test('both examples read without issues and mean the same', () => {
   assert.deepEqual(unnamed(en), unnamed(pl));
 });
 
-test('the range: a calendar year by default, otherwise from the given day for a year', () => {
+test('the range: a calendar year by default, otherwise a year from the start of a month', () => {
   assert.deepEqual(range('rok: 2027'), { from: '2027-01-01', to: '2027-12-31', days: 365, issues: [] });
-  assert.deepEqual(range('rok: 2026\nod: 1.09'), { from: '2026-09-01', to: '2027-08-31', days: 365, issues: [] });
-  assert.deepEqual(range('od: 1.09\nrok: 2027'), { from: '2027-09-01', to: '2028-08-31', days: 366, issues: [] }); // order does not matter
+  assert.deepEqual(range('rok: 2026\nod: wrzesień'), { from: '2026-09-01', to: '2027-08-31', days: 365, issues: [] });
+  assert.deepEqual(range('od: september\nrok: 2027'), { from: '2027-09-01', to: '2028-08-31', days: 366, issues: [] }); // order does not matter
+  assert.deepEqual(range('rok: 2026\nod: 9'), range('rok: 2026\nod: wrzesień'));
   assert.deepEqual(range('od: 2027-03-01'), { from: '2027-03-01', to: '2028-02-29', days: 366, issues: [] }); // a full date sets the year
-  assert.deepEqual(range('rok: 2028\nod: 29.02'), { from: '2028-02-29', to: '2029-02-28', days: 366, issues: [] });
-  assert.deepEqual(range('rok: 2027\nod: 29.02'), { from: '2027-01-01', to: '2027-12-31', days: 365, issues: [2] });
+  assert.deepEqual(range('rok: 2028\nod: 15.02'), { from: '2028-02-01', to: '2029-01-31', days: 366, issues: [] }); // a date stands for its month
+  assert.deepEqual(range('rok: 2027\nod: 31.02').issues, [2]);
+  assert.deepEqual(range('rok: 2027\nod: 13').issues, [2]);
 });
 
 test('directions: clockwise and outwards by default, either can be turned', () => {
@@ -70,36 +72,39 @@ test('the year and the months are always there; the other bands are chosen', () 
 });
 
 test('anticlockwise, the chosen thing is still at the top', () => {
-  for (const text of ['kierunek: przeciwnie\nrok: 2027', 'kierunek: przeciwnie\nrok: 2027\ngóra: 1.09', 'kierunek: przeciwnie\nrok: 2026\nod: 1.09\ngóra: 4.02']) {
+  for (const text of ['kierunek: przeciwnie\nrok: 2027', 'kierunek: przeciwnie\nrok: 2027\ngóra: wrzesień', 'kierunek: przeciwnie\nrok: 2026\nod: wrzesień\ngóra: luty']) {
     const cw = atTop(text.replace('kierunek: przeciwnie\n', '')), ccw = atTop(text);
     assert.equal(ccw.L.turn, -1);
     assert.ok(Math.abs(ccw.top - cw.top) < 1e-9, text);
   }
 });
 
-test('the seam is at the top by default; the top takes only a date', () => {
-  const { L, top } = atTop('rok: 2027');
-  assert.ok(Math.abs(top - L.step / 2) < 1e-9);
-  for (const t of ['łączenie', 'styczeń', 'przesilenie grudniowe']) assert.deepEqual(range(`góra: ${t}`).issues, [1], t);
+test('the seam is at the top by default, and when the first month is chosen; the top takes only a month', () => {
+  for (const text of ['rok: 2027', 'rok: 2027\ngóra: styczeń', 'rok: 2027\nod: wrzesień\ngóra: wrzesień']) {
+    const { L, cal, top } = atTop(text);
+    assert.equal(cal.top, null, text);
+    assert.ok(Math.abs(top - L.step / 2) < 1e-9, text);
+  }
+  for (const t of ['łączenie', 'przesilenie grudniowe', '13']) assert.deepEqual(range(`góra: ${t}`).issues, [1], t);
   assert.deepEqual(range('od: równonoc marcowa').issues, [1]);
   assert.deepEqual(range('strefa: +1').issues, [1]);
 });
 
-test('a date at the top: its week column is centred on top', () => {
-  for (const text of ['rok: 2027\ngóra: 1.09', 'rok: 2026\nod: 1.09\ngóra: 15.01', 'year: 2027\ntop: 2027-06-30']) {
+test('a month at the top: its first day is on top', () => {
+  for (const text of ['rok: 2027\ngóra: wrzesień', 'rok: 2026\nod: wrzesień\ngóra: styczeń', 'year: 2027\ntop: june', 'rok: 2026\nod: 9\ngóra: 8']) {
     const { L, cal, top } = atTop(text);
     assert.deepEqual(cal.issues, []);
-    const t = cal.top as { m: number; d: number };
+    const m = cal.top!;
     const [y0] = dateOf(L.range.start);
-    let i = epochDay(y0, t.m, t.d) - L.range.start;
-    if (i < 0) i = epochDay(y0 + 1, t.m, t.d) - L.range.start;
-    const col = 1 + Math.floor((L.offset + i) / 7);
-    assert.ok(Math.abs(top - (col + 0.5) * L.step) < 1e-9, text);
+    let i = epochDay(y0, m, 1) - L.range.start;
+    if (i < 0) i = epochDay(y0 + 1, m, 1) - L.range.start;
+    assert.ok(i >= 0 && i < L.range.days, text);
+    assert.ok(Math.abs(top - L.step * (1 + (L.offset + i) / 7)) < 1e-9, text);
   }
 });
 
 test('bands: one stretch per month and sign, covering the whole range', () => {
-  for (const text of ['rok: 2027', 'rok: 2026\nod: 1.09', 'rok: 2027\nod: 20.03', 'rok: 2027\nod: 15.03']) {
+  for (const text of ['rok: 2027', 'rok: 2026\nod: wrzesień', 'rok: 2027\nod: marzec', 'rok: 2028\nod: luty']) {
     const { L } = atTop(text);
     for (const [band, n] of [['months', 12], ['zodiac', 12]] as const) {
       const segs = L.segments[band]!;
@@ -198,18 +203,11 @@ test('counters read in both languages, with or without a name', () => {
 test('unknown lines and values are reported, the rest still reads', () => {
   const cal = parseCalendar([
     'rok: 2027', 'od: 31.04', 'góra: przedwiośnie', 'święta: pl', '14.03 Urodziny', 'kolory: weekend=#eee, sobota=#f00',
-    'od: 1.10',
+    'od: październik',
   ].join('\n'), 'pl', 2026);
   assert.deepEqual(cal.issues.map((i) => i.line), [2, 3, 4, 5, 6]);
   assert.deepEqual(calendarRange(cal).start, epochDay(2027, 10, 1));
   assert.deepEqual(cal.colors, { weekend: '#eee' });
-});
-
-test('a date at the top must fall in the calendar', () => {
-  const cal = parseCalendar('rok: 2027\ngóra: 29.02', 'pl', 2026);
-  assert.deepEqual(cal.issues.map((i) => i.line), [2]);
-  assert.deepEqual(cal.top, { kind: 'seam' });
-  assert.deepEqual(parseCalendar('rok: 2027\nod: 1.09\ngóra: 29.02', 'pl', 2026).issues, []); // 29.02.2028
 });
 
 test('the format line is added once, after leading comments', () => {
@@ -219,8 +217,8 @@ test('the format line is added once, after leading comments', () => {
 
 test('every kind of year draws', () => {
   const days = ['pn', 'wt', 'śr', 'cz', 'pt', 'sb', 'nd'];
-  const starts = ['1.01', '1.09', '29.02', '15.03', '20.03', '21.12'];
-  const tops = ['', '21.12', '23.09', '15.01', '15.08', '1.06'];
+  const starts = ['styczeń', 'wrzesień', 'luty', 'marzec', 'październik', 'grudzień'];
+  const tops = ['', 'grudzień', 'wrzesień', 'styczeń', 'sierpień', 'czerwiec'];
   for (const y of [MIN_YEAR, 1900, 2000, 2023, 2024, 2026, 2027, 2028, 2100, MAX_YEAR]) {
     for (let d = 0; d < 7; d++) {
       const start = starts[(y + d) % starts.length], top = tops[(y * 3 + d) % tops.length];
@@ -238,9 +236,9 @@ test('every kind of year draws', () => {
 test('settings written as text read back the same, in either language', () => {
   const texts = [
     EXAMPLE.en, EXAMPLE.pl, '',
-    'rok: 2027\nod: 20.03\ngóra: 21.06\npierwszy dzień: śr\nkierunek: przeciwnie\ndni tygodnia: do środka\npierścienie: brak',
-    'year: 2028\ntop: 15.01\nrings: counters, zodiac\ncounter: months from 31.01.2028 to 12\ncounter: weeks from 4.01.2027 week',
-    'rok: 2026\nod: 1.09.2027\ngóra: 15.03.2028\nkolory: weekend=#eee, linie=#123456\ntytuł: A.D. 2027\npodpis: jeden\npodpis: dwa',
+    'rok: 2027\nod: marzec\ngóra: czerwiec\npierwszy dzień: śr\nkierunek: przeciwnie\ndni tygodnia: do środka\npierścienie: brak',
+    'year: 2028\ntop: january\nod: october\nrings: counters, zodiac\ncounter: months from 31.01.2028 to 12\ncounter: weeks from 4.01.2027 week',
+    'rok: 2026\nod: 1.09.2027\ngóra: marzec\nkolory: weekend=#eee, linie=#123456\ntytuł: A.D. 2027\npodpis: jeden\npodpis: dwa',
     'rok: 2026\ntytuł: Rok\ntytuł: szkolny\nwnętrze: 4',
     'rok: 2026\nmiesiące: rzymskie\nzodiak: znaki\npierścienie: zodiak',
     'year: 2026\nmonths: short',

@@ -90,20 +90,14 @@ export interface Counter { unit: Unit; from: DayDate; until?: Until; name: strin
 /** A day of the year without its year (14.03), or with one (14.03.2027). */
 export interface DayDate { m: number; d: number; y?: number }
 
-/** Where the calendar starts: a day. */
-export type Start = { kind: 'date' } & DayDate;
-
-/** What is at the top of the disc: the week of a day, or else the seam between the end and the
- * start of the year (the column with the weekday names). */
-export type Top = { kind: 'seam' } | ({ kind: 'date' } & DayDate);
 
 export interface Issue { line: number; message: string }
 
 export interface Calendar {
   format: number;
   year: number; // the year in which the calendar starts
-  start: Start;
-  top: Top;
+  start: number; // the month the calendar starts with (1–12), on its first day
+  top: number | null; // the month whose start is at the top; null: the first month, the seam
   firstDay: number; // weekday the week starts with on the radius: 0 = Monday … 6 = Sunday
   clockwise: boolean; // weeks go round clockwise (else anticlockwise)
   outwards: boolean; // a week runs from the centre outwards (else inwards)
@@ -186,6 +180,22 @@ export const DEFAULT_COLORS: Record<string, string> = { weekend: '#eaeaea', line
 
 const NONE = new Set(['brak', 'none', '-']);
 
+const MONTH_ALIAS = aliases([
+  'styczeń styczen stycznia sty january jan', 'luty lutego lut february feb', 'marzec marca mar march',
+  'kwiecień kwiecien kwietnia kwi april apr', 'maj maja may', 'czerwiec czerwca cze june jun',
+  'lipiec lipca lip july jul', 'sierpień sierpien sierpnia sie august aug',
+  'wrzesień wrzesien września wrzesnia wrz september sep sept',
+  'październik pazdziernik października pazdziernika paź paz october oct',
+  'listopad listopada lis november nov', 'grudzień grudzien grudnia gru december dec',
+]);
+/** A month (1–12) from its name, its number or a date in it; with the year a date gives. */
+function parseMonth(low: string): { m: number; y?: number } | undefined {
+  if (MONTH_ALIAS[low] !== undefined) return { m: MONTH_ALIAS[low] + 1 };
+  if (/^\d{1,2}$/.test(low) && +low >= 1 && +low <= 12) return { m: +low };
+  const d = parseDate(low);
+  return d && validDate(d) ? { m: d.m, y: d.y } : undefined;
+}
+
 /**
  * The area of the inside — the year and the bands inside the months — counted in months bands:
  * the one band that always stands in the same place and has the same size. The year takes as
@@ -204,8 +214,8 @@ const MSG: Record<Lang, Record<string, string>> = {
     key: 'unknown setting “{0}”',
     line: 'a line should be a setting: name, colon, value (year: 2027)',
     year: 'write a year between ' + MIN_YEAR + ' and ' + MAX_YEAR,
-    start: 'write a date (1.09, 1.09.2026)',
-    top: 'write a date (1.09)',
+    start: 'write a month (september)',
+    top: 'write a month (january)',
     day: 'unknown day “{0}”',
     ring: 'unknown ring “{0}” (zodiac, counters)',
     direction: 'write clockwise or anticlockwise',
@@ -217,15 +227,14 @@ const MSG: Record<Lang, Record<string, string>> = {
     color: 'write a colour as weekend=#hex or lines=#hex',
     inside: 'write the size of the inside in months bands: ' + INSIDE_STEPS.join(', '),
     date: 'there is no such date: {0}',
-    outside: '{0} is not in this calendar ({1}–{2})',
     format: 'these settings were saved in format {0}, newer than this page knows (1); they may not show as intended',
   },
   pl: {
     key: 'nieznane ustawienie „{0}”',
     line: 'linia powinna być ustawieniem: nazwa, dwukropek, wartość (rok: 2027)',
     year: 'wpisz rok od ' + MIN_YEAR + ' do ' + MAX_YEAR,
-    start: 'wpisz datę (1.09, 1.09.2026)',
-    top: 'wpisz datę (1.09)',
+    start: 'wpisz miesiąc (wrzesień)',
+    top: 'wpisz miesiąc (styczeń)',
     day: 'nieznany dzień „{0}”',
     ring: 'nieznany pierścień „{0}” (pory roku, zodiak, liczniki)',
     direction: 'wpisz zgodnie z zegarem albo przeciwnie do zegara',
@@ -237,7 +246,6 @@ const MSG: Record<Lang, Record<string, string>> = {
     color: 'wpisz kolor jako weekend=#hex albo linie=#hex',
     inside: 'wpisz wielkość wnętrza w pasach miesięcy: ' + INSIDE_STEPS.join(', '),
     date: 'nie ma takiej daty: {0}',
-    outside: '{0} nie wypada w tym kalendarzu ({1}–{2})',
     format: 'ustawienia zapisano w formacie {0}, nowszym niż zna ta strona (1); mogą wyglądać inaczej, niż zamierzono',
   },
 };
@@ -269,8 +277,8 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
   const cal: Calendar = {
     format: 1,
     year: Math.min(MAX_YEAR, Math.max(MIN_YEAR, defaultYear)),
-    start: { kind: 'date', m: 1, d: 1 },
-    top: { kind: 'seam' },
+    start: 1,
+    top: null,
     firstDay: 0,
     clockwise: true,
     outwards: true,
@@ -284,7 +292,7 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
     signature: [],
     issues,
   };
-  let startLine = 0, topLine = 0;
+  let startYear: number | undefined, startLine = 0;
 
   // NFC first: text copied on macOS can carry "ś" as "s" + combining accent.
   text.normalize('NFC').split(/\r?\n/).forEach((full, i) => {
@@ -305,15 +313,12 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
       if (Number.isInteger(y) && y >= MIN_YEAR && y <= MAX_YEAR) cal.year = y;
       else issues.push({ line: n, message: say('year') });
     } else if (key === 'start') {
-      const date = parseDate(low);
-      if (date && !validDate(date)) issues.push({ line: n, message: say('date', showDate(date)) });
-      else if (date) { cal.start = { kind: 'date', ...date }; startLine = n; }
-      else issues.push({ line: n, message: say('start') });
+      const m = parseMonth(low);
+      if (!m) issues.push({ line: n, message: say('start') });
+      else { cal.start = m.m; startYear = m.y; startLine = n; }
     } else if (key === 'top') {
-      const date = parseDate(low);
-      if (date && !validDate(date)) issues.push({ line: n, message: say('date', showDate(date)) });
-      else if (date) { cal.top = { kind: 'date', ...date }; topLine = n; }
-      else issues.push({ line: n, message: say('top') });
+      const m = parseMonth(low);
+      if (!m) issues.push({ line: n, message: say('top') }); else cal.top = m.m;
     } else if (key === 'firstDay') {
       const d = DAY_ALIAS[low];
       if (d === undefined) issues.push({ line: n, message: say('day', value) }); else cal.firstDay = d;
@@ -385,37 +390,24 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
     }
   });
 
-  // Checked once everything is read: `rok:` may come after `od:`.
-  const s = cal.start;
-  if (s.kind === 'date' && s.y !== undefined) {
-    if (s.y < MIN_YEAR || s.y > MAX_YEAR) { issues.push({ line: startLine, message: say('year') }); cal.start = { kind: 'date', m: s.m, d: s.d }; }
-    else cal.year = s.y; // a full date sets the year; the start keeps only the day
-    cal.start = { kind: 'date', m: s.m, d: s.d };
+  // A full date in `od:` sets the year, wherever `rok:` stands. The first month at the top is the seam.
+  if (startYear !== undefined) {
+    if (startYear < MIN_YEAR || startYear > MAX_YEAR) issues.push({ line: startLine, message: say('year') });
+    else cal.year = startYear;
   }
-  if (s.kind === 'date' && !validDate({ ...s, y: cal.year })) {
-    issues.push({ line: startLine, message: say('date', showDate({ ...s, y: cal.year })) });
-    cal.start = { kind: 'date', m: 1, d: 1 };
-  }
-  const t = cal.top;
-  if (t.kind === 'date' && occurrence(calendarRange(cal), t) === undefined) {
-    const r = calendarRange(cal);
-    const fmt = (e: number) => { const [y, m, d] = dateOf(e); return showDate({ y, m, d }); };
-    issues.push({ line: topLine, message: say('outside', showDate(t), fmt(r.start), fmt(r.start + r.days - 1)) });
-    cal.top = { kind: 'seam' };
-  }
+  if (cal.top === cal.start) cal.top = null;
 
   issues.sort((a, b) => a.line - b.line);
   return cal;
 }
 
-/** The days on the disc: the first one (epoch day) and how many. One year: up to the day before
- * the same date a year later. */
+/** The days on the disc: the first one (epoch day) and how many. One year, from the first day of
+ * the first month. */
 export interface Range { start: number; days: number }
 
 export function calendarRange(cal: Calendar): Range {
-  const y = cal.year, s = cal.start;
-  const a = epochDay(s.y ?? y, s.m, s.d);
-  return { start: a, days: epochDay((s.y ?? y) + 1, s.m, s.d) - a }; // 29.02 → up to 28.02
+  const a = epochDay(cal.year, cal.start, 1);
+  return { start: a, days: epochDay(cal.year + 1, cal.start, 1) - a };
 }
 
 /** Index (0-based) of a day in the range, or undefined if it is not there. */
@@ -468,9 +460,8 @@ export function formatCalendar(cal: Calendar, lang: Lang): string {
   const w = WORDS[lang];
   const lines: string[] = [`${w.year}: ${cal.year}`];
   const put = (key: string, value: string) => lines.push(`${w[key]}: ${value}`);
-  const st = cal.start;
-  if (st.m !== 1 || st.d !== 1) put('start', showDate({ m: st.m, d: st.d }));
-  if (cal.top.kind === 'date') put('top', showDate(cal.top));
+  if (cal.start !== 1) put('start', MONTHS[lang][cal.start - 1].toLowerCase());
+  if (cal.top !== null) put('top', MONTHS[lang][cal.top - 1].toLowerCase());
   if (cal.firstDay !== 0) put('firstDay', DAY_WORDS[lang][cal.firstDay]);
   if (!cal.clockwise) put('direction', w.anticlockwise);
   if (!cal.outwards) put('weekdays', w.inwards);
@@ -604,12 +595,13 @@ export function layoutCalendar(cal: Calendar, lang: Lang): Layout {
   const segments: Partial<Record<Band, Segment[]>> = {};
   for (const b of ['zodiac', 'months'] as Band[]) segments[b] = bandSegments(cal, range, b, lang);
 
-  // Angles before turning; the turn puts the chosen week at the top (270°).
-  let anchor = step / 2; // the seam column
-  const t = cal.top;
-  if (t.kind === 'date') {
-    const i = occurrence(range, t) ?? 0;
-    anchor = step * (1 + Math.floor((offset + i) / 7) + 0.5);
+  // Angles before turning; the turn puts the start of the chosen month at the top (270°): its first
+  // day, or for the first month the middle of the seam column before it.
+  let anchor = step / 2;
+  if (cal.top !== null) {
+    const [y0] = dateOf(range.start);
+    const i = epochDay(cal.top < cal.start ? y0 + 1 : y0, cal.top, 1) - range.start;
+    anchor = step * (1 + (offset + i) / 7);
   }
   const counters = cal.counters.map((c) => counterSegments(c, range));
   const counterStarts = cal.counters.map((c) => counterStart(c, range));

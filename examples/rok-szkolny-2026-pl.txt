@@ -3,8 +3,8 @@
 
 format: 1
 rok: 2026
-od: 1.09            # rok szkolny
-góra: 1.01          # tydzień na górze; bez tego łączenie końca roku z początkiem
+od: wrzesień        # pierwszy miesiąc; rok szkolny
+góra: styczeń       # miesiąc, który zaczyna się na górze; bez tego pierwszy
 pierwszy dzień: pn  # dzień, od którego zaczyna się tydzień na promieniu; śr daje weekend w środku
 kierunek: zgodnie z zegarem  # albo przeciwnie do zegara
 dni tygodnia: od środka      # albo do środka: tydzień biegnie od krawędzi do środka

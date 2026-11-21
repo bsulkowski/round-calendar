@@ -14,9 +14,9 @@ ones are thinner but longer. In the middle is the year, and round it the months,
 the days. Between them can go a band for the zodiac and counters — weeks of a school year,
 months since a day — as thin bands of their own.
 
-The year can start on any day — on 1 January, at the start of a school year — and runs for a
-year from there. Where its end meets its start there is a seam: one column with the weekday names.
-The seam is at the top, or the week of a chosen day. By default time runs clockwise and each week from the centre
+The year starts with a month — January, or September for a school year — and runs for twelve
+months. Where its end meets its start there is a seam: one column with the weekday names. At the
+top is the start of a chosen month; by default the first one, so the seam. By default time runs clockwise and each week from the centre
 outwards; either direction can be turned.
 
 ## Settings
@@ -28,8 +28,8 @@ be written in English or in Polish — only the names on the sheet follow the la
 | Line | What it does |
 |---|---|
 | `year: 2026` | The year in which the calendar starts. Without it, the current year. |
-| `from: 1.09` | The first day. The calendar runs to the day before the same date a year later. A full date (`1.09.2026`, `2026-09-01`) also sets the year. By default 1 January. |
-| `top: 1.01` | The day whose week is at the top of the disc. Without it, the seam. |
+| `from: september` | The first month; the calendar runs for twelve months from its first day. A name, a number (`9`) or a date in the month (`1.09`); a full date (`1.09.2026`) also sets the year. By default January. |
+| `top: january` | The month whose first day is at the top of the disc. By default the first month: the seam is at the top. |
 | `first day: sun` | The weekday the week starts with on the radius: on the innermost ring, or with `weekdays: inwards` the outermost. Monday by default. `wed` puts the weekend in the middle. |
 | `direction: anticlockwise` | Which way the weeks go round: `clockwise` (the default) or `anticlockwise`. |
 | `weekdays: inwards` | Which way a week runs along the radius: `outwards`, from the centre (the default), or `inwards`, from the rim. |
@@ -50,8 +50,8 @@ units `tygodnie`, `miesiące`; `do` for `to`.
 The week runs along the radius and on into the next column, so its order on the radius is always
 the seven days in sequence; `first day` chooses where the sequence starts, `weekdays` which way it runs.
 
-The bands are cycles too. A month or a sign cut by the seam is one stretch across it: in a calendar
-from 15 March, the March at the end (2028) runs on into the March at the start (2027). Counters are not:
+The bands are cycles too. A zodiac sign cut by the seam is one stretch across it: in a calendar
+from January, the Capricorn at the end runs on into the Capricorn at the start. Counters are not:
 their numbers at the end and at the start differ, so they stop at the seam.
 
 Lines stand only where they divide days: the steps between months, which run on across the months

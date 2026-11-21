@@ -3,8 +3,8 @@
 
 format: 1
 year: 2026
-from: 1.09          # a school year
-top: 1.01           # the week at the top; without it, the seam where the year's end meets its start
+from: september     # the first month; a school year
+top: january        # the month that starts at the top; without it, the first
 first day: mon      # the weekday the week starts with on the radius; wed puts the weekend in the middle
 direction: clockwise  # or anticlockwise
 weekdays: outwards  # or inwards: the week runs from the rim to the centre

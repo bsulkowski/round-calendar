@@ -5,8 +5,8 @@ export const EXAMPLE = {
 # Each line is a setting: a name, a colon and a value. Any of them can be left out.
 
 year: 2026
-from: 1.09          # a school year
-top: 1.01           # the week at the top; without it, the seam where the year's end meets its start
+from: september     # the first month; a school year
+top: january        # the month that starts at the top; without it, the first
 first day: mon      # the weekday the week starts with on the radius; wed puts the weekend in the middle
 direction: clockwise  # or anticlockwise
 weekdays: outwards  # or inwards: the week runs from the rim to the centre
@@ -17,8 +17,8 @@ counter: weeks from 1.09 to 25.06 school weeks   # numbered from 1; ends on a da
 # Każda linia to ustawienie: nazwa, dwukropek i wartość. Każde można pominąć.
 
 rok: 2026
-od: 1.09            # rok szkolny
-góra: 1.01          # tydzień na górze; bez tego łączenie końca roku z początkiem
+od: wrzesień        # pierwszy miesiąc; rok szkolny
+góra: styczeń       # miesiąc, który zaczyna się na górze; bez tego pierwszy
 pierwszy dzień: pn  # dzień, od którego zaczyna się tydzień na promieniu; śr daje weekend w środku
 kierunek: zgodnie z zegarem  # albo przeciwnie do zegara
 dni tygodnia: od środka      # albo do środka: tydzień biegnie od krawędzi do środka

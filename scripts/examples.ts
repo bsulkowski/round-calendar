@@ -13,19 +13,19 @@ rok: 2027
 pierścienie: zodiak
 licznik: tygodnie od 4.01.2027 tydzień roku
 `],
-  ['od-marca-2027-pl', 'pl', `# Od 20 marca, 21 czerwca na górze, weekend w środku tygodnia.
+  ['od-marca-2027-pl', 'pl', `# Od marca, czerwiec na górze, weekend w środku tygodnia.
 rok: 2027
-od: 20.03
-góra: 21.06
+od: marzec
+góra: czerwiec
 pierwszy dzień: śr
 licznik: tygodnie od 7.06.2027 do 12 kurs pływania
 `],
-  ['sunday-first-2028-en', 'en', `# Weeks from Sunday, anticlockwise and inwards, a leap year, mid-January at the top, a larger inside, two rows in the centre.
+  ['sunday-first-2028-en', 'en', `# Weeks from Sunday, anticlockwise and inwards, a leap year, January at the top, a larger inside, two rows in the centre.
 year: 2028
 first day: sun
 direction: anticlockwise
 weekdays: inwards
-top: 15.01
+top: january
 title: A.D.
 title: 2028
 inside: 4

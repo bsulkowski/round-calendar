@@ -14,9 +14,9 @@ pola — zewnętrzne są cieńsze, ale dłuższe. Pośrodku jest rok, a wokół 
 miesiące. Między nimi może stać pas zodiaku oraz liczniki — tygodnie roku szkolnego, miesiące
 od danego dnia — jako własne cienkie pasy.
 
-Rok może zaczynać się dowolnego dnia — 1 stycznia, na początku roku szkolnego — i trwa od niego
-rok. Tam, gdzie jego koniec spotyka się z początkiem, jest łączenie: jedna kolumna z nazwami dni
-tygodnia. Na górze jest łączenie albo tydzień wybranego dnia. Domyślnie czas biegnie zgodnie z ruchem wskazówek zegara, a każdy
+Rok zaczyna się od miesiąca — stycznia albo, dla roku szkolnego, września — i trwa dwanaście
+miesięcy. Tam, gdzie jego koniec spotyka się z początkiem, jest łączenie: jedna kolumna z nazwami
+dni tygodnia. Na górze jest początek wybranego miesiąca; domyślnie pierwszego, czyli łączenie. Domyślnie czas biegnie zgodnie z ruchem wskazówek zegara, a każdy
 tydzień od środka na zewnątrz; oba kierunki można odwrócić.
 
 ## Ustawienia
@@ -29,8 +29,8 @@ na kartce.
 | Linia | Co robi |
 |---|---|
 | `rok: 2026` | Rok, w którym kalendarz się zaczyna. Bez tej linii — bieżący. |
-| `od: 1.09` | Pierwszy dzień. Kalendarz trwa do dnia przed tą samą datą rok później. Pełna data (`1.09.2026`, `2026-09-01`) ustawia też rok. Domyślnie 1 stycznia. |
-| `góra: 1.01` | Dzień, którego tydzień jest na górze koła. Bez tej linii — łączenie. |
+| `od: wrzesień` | Pierwszy miesiąc; kalendarz trwa dwanaście miesięcy od jego pierwszego dnia. Nazwa, numer (`9`) albo data w tym miesiącu (`1.09`); pełna data (`1.09.2026`) ustawia też rok. Domyślnie styczeń. |
+| `góra: styczeń` | Miesiąc, którego pierwszy dzień jest na górze koła. Domyślnie pierwszy miesiąc: na górze jest łączenie. |
 | `pierwszy dzień: nd` | Dzień, od którego zaczyna się tydzień na promieniu: na najbardziej wewnętrznym pierścieniu, a przy `dni tygodnia: do środka` na zewnętrznym. Domyślnie poniedziałek. `śr` daje weekend w środku. |
 | `kierunek: przeciwnie do zegara` | W którą stronę idą tygodnie: `zgodnie z zegarem` (domyślnie) albo `przeciwnie do zegara`. |
 | `dni tygodnia: do środka` | W którą stronę biegnie tydzień wzdłuż promienia: `od środka` (domyślnie) albo `do środka`, od krawędzi. |
@@ -52,8 +52,8 @@ Tydzień biegnie wzdłuż promienia i dalej do następnej kolumny, więc jego ko
 to zawsze siedem dni po kolei; `pierwszy dzień` wybiera, od którego się zaczyna, `dni tygodnia` —
 w którą stronę biegnie.
 
-Pasy też są cyklami. Miesiąc albo znak przecięte łączeniem to jeden odcinek przez nie:
-w kalendarzu od 15 marca marzec z końca (2028) przechodzi w marzec z początku (2027). Liczniki nie: ich numery
+Pasy też są cyklami. Znak zodiaku przecięty łączeniem to jeden odcinek przez nie: w kalendarzu
+od stycznia koziorożec z końca przechodzi w koziorożca z początku. Liczniki nie: ich numery
 na końcu i na początku są różne, więc kończą się na łączeniu.
 
 Linie stoją tylko tam, gdzie dzielą dni: schodkowe granice miesięcy, które przechodzą przez pas
