@@ -394,8 +394,14 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
     }
 
     const kv = line.match(RE_KEY);
+    const key = kv ? KEYS[kv[1].toLowerCase().replace(/\s+/g, ' ')] : undefined;
+    // In a group, a line that is not a setting is a day written wrong: it stays with the group.
+    if (group && !key) {
+      group.lines.push(full.trim());
+      issues.push({ line: n, message: say('dayLine'), group: cal.groups.length - 1 });
+      return;
+    }
     if (!kv) { issues.push({ line: n, message: say('line') }); return; }
-    const key = KEYS[kv[1].toLowerCase().replace(/\s+/g, ' ')];
     if (!key) { issues.push({ line: n, message: say('key', kv[1]) }); return; }
     const value = kv[2].trim();
     const low = value.toLowerCase().replace(/\s+/g, ' ');

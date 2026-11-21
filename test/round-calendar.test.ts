@@ -344,6 +344,10 @@ test('groups of days', () => {
   // A day outside a group, a colour outside one or not a colour.
   assert.deepEqual(parseCalendar('14.03 Ala', 'pl', 2026).issues.map((i) => i.line), [1]);
   assert.deepEqual(parseCalendar('kolor: #fff\n[A]\nkolor: zielony', 'pl', 2026).issues.map((i) => i.line), [1, 3]);
+  // A line in a group that is neither a day nor a setting stays with the group.
+  const odd = parseCalendar('[A]\nAla\nurodziny: Ala', 'pl', 2026);
+  assert.deepEqual(odd.issues.map((i) => [i.line, i.group]), [[2, 0], [3, 0]]);
+  assert.deepEqual(odd.groups[0].lines, ['Ala', 'urodziny: Ala']);
   // Other settings under a group still count for the calendar.
   assert.equal(parseCalendar('[A]\nrok: 2030', 'pl', 2026).year, 2030);
 });
