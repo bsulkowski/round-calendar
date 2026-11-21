@@ -34,16 +34,11 @@ easter+60 Corpus Christi
 text: #1f3a7a
 21.01 Grandmother’s Day
 22.01 Grandfather’s Day
-easter-52 Fat Thursday
 14.02 Valentine’s Day
 8.03 Women’s Day
-1.04 April Fools’ Day
 26.05 Mother’s Day
 1.06 Children’s Day
 23.06 Father’s Day
-30.09 Boys’ Day
-14.10 National Education Day
-29.11 St Andrew’s Eve
 6.12 St Nicholas Day
 
 [Birthdays]
@@ -84,16 +79,11 @@ wielkanoc+60 Boże Ciało
 tekst: #1f3a7a
 21.01 Dzień Babci
 22.01 Dzień Dziadka
-wielkanoc-52 Tłusty czwartek
 14.02 Walentynki
 8.03 Dzień Kobiet
-1.04 Prima aprilis
 26.05 Dzień Matki
 1.06 Dzień Dziecka
 23.06 Dzień Ojca
-30.09 Dzień Chłopaka
-14.10 Dzień Edukacji Narodowej
-29.11 Andrzejki
 6.12 Mikołajki
 
 [Urodziny]

@@ -32,16 +32,11 @@ wielkanoc+60 Boże Ciało
 tekst: #1f3a7a
 21.01 Dzień Babci
 22.01 Dzień Dziadka
-wielkanoc-52 Tłusty czwartek
 14.02 Walentynki
 8.03 Dzień Kobiet
-1.04 Prima aprilis
 26.05 Dzień Matki
 1.06 Dzień Dziecka
 23.06 Dzień Ojca
-30.09 Dzień Chłopaka
-14.10 Dzień Edukacji Narodowej
-29.11 Andrzejki
 6.12 Mikołajki
 
 [Urodziny]
