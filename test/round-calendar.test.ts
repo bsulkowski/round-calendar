@@ -323,7 +323,7 @@ test('Easter Sunday', () => {
 test('groups of days', () => {
   const text = 'rok: 2027\n[Urodziny]\nkolor: #CFE8CF\n14.03 Ala\n# bez nazwy:\n2.07\nwielkanoc-2 Wielki Piątek\n31.02 Zła\n[]\n1.01.2028\n';
   const cal = parseCalendar(text, 'pl', 2026);
-  assert.deepEqual(cal.issues.map((i) => i.line), [8]);
+  assert.deepEqual(cal.issues.map((i) => [i.line, i.group]), [[8, 0]]);
   assert.equal(cal.groups.length, 2);
   const [g, h] = cal.groups;
   assert.equal(g.name, 'Urodziny');

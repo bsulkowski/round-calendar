@@ -100,7 +100,8 @@ export interface GroupDay { when: When; label: string }
 export interface Group { name: string; color?: string; days: GroupDay[]; lines: string[] }
 
 
-export interface Issue { line: number; message: string }
+/** A line that could not be read; in a group, the group's index, so a form can show it there. */
+export interface Issue { line: number; message: string; group?: number }
 
 export interface Calendar {
   format: number;
@@ -384,7 +385,9 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
       if (!group) issues.push({ line: n, message: say('group') });
       else {
         group.lines.push(full.trim());
-        if (typeof day === 'string') issues.push({ line: n, message: say(day, day === 'date' ? line.split(/\s/)[0] : '') });
+        if (typeof day === 'string') {
+          issues.push({ line: n, message: say(day, day === 'date' ? line.split(/\s/)[0] : ''), group: cal.groups.length - 1 });
+        }
         else group.days.push(day);
       }
       return;
