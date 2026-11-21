@@ -41,7 +41,7 @@ na kartce.
 | `strefa: +1` | Strefa czasowa dla dat równonocy i przesileń. Domyślnie UTC. |
 | `kolory: weekend=#eaeaea, linie=#c0c0c0` | Kolory pól weekendu i linii. |
 | `tytuł: A.D. 2027` | Napis w środku koła zamiast roku (albo `2026/2027` dla roku przechodzącego przez Nowy Rok). Kilka linii `tytuł` to kilka wierszy; `tytuł: brak` zostawia środek pusty. Wielkość liter dopasowuje się do miejsca. |
-| `wnętrze: 2` | Wielkość wszystkiego wewnątrz miesięcy — roku i pasów — mierzona w pierścieniach dnia: `0,5`, `1`, `1,5` (domyślnie), `2` albo `2,5`; inna liczba czyta się jako najbliższa z nich. Na zewnątrz jest zawsze 7½ pierścienia (dni i miesiące), więc ½ pierścienia to ćwierć promienia, a 2½ — połowa. Miesiące i dni nie ruszają się, gdy przybywa albo ubywa pasów: pasy dzielą się wnętrzem. |
+| `wnętrze: 4` | Wielkość wszystkiego wewnątrz miesięcy — roku i pasów — liczona w pasach miesięcy: od `1` do `5`, domyślnie `3`; inna liczba czyta się jako najbliższa z nich. Rok zajmuje tyle co jeden pas miesięcy, domyślnie tak samo pory roku i zodiak; pasy dzielą się wnętrzem, więc miesiące i dni stoją w miejscu, gdy przybywa albo ubywa pasów. `1` to ćwierć promienia, `5` — połowa. Miesiące i dni nie ruszają się, gdy przybywa albo ubywa pasów: pasy dzielą się wnętrzem. |
 | `podpis: Rok Nowaków` | Linijka w prawym dolnym rogu; kilka takich linii to kilka wierszy. |
 | `format: 1` | Wersja formatu pliku. Zapis do pliku ją dodaje; plik bez niej to format 1. |
 

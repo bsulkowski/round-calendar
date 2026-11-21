@@ -40,7 +40,7 @@ be written in English or in Polish — only the names on the sheet follow the la
 | `timezone: +1` | The time zone for the dates of equinoxes and solstices. UTC by default. |
 | `colors: weekend=#eaeaea, lines=#c0c0c0` | Colours of the weekend cells and of the lines. |
 | `title: A.D. 2027` | The text in the middle of the disc instead of the year (or of `2026/2027` for a year that crosses New Year). Several `title` lines give several rows; `title: none` leaves the middle empty. The text is sized to fit. |
-| `inside: 2` | The size of everything inside the months — the year and the bands — measured in weekday rings: `0.5`, `1`, `1.5` (the default), `2` or `2.5`; another number reads as the nearest of these. Outside there are always 7½ rings (the days and the months), so ½ ring is a quarter of the radius and 2½ rings a half. The months and the days do not move when bands are added or removed: the bands share the inside. |
+| `inside: 4` | The size of everything inside the months — the year and the bands — counted in months bands: from `1` to `5`, `3` by default; another number reads as the nearest of these. The year takes as much as one months band, and so do the seasons and the zodiac by default; the bands share the inside, so the months and the days stay in place when bands are added or removed. `1` is a quarter of the radius, `5` a half. The months and the days do not move when bands are added or removed: the bands share the inside. |
 | `signature: The Smiths’ year` | A line in the bottom-right corner; several lines give several rows. |
 | `format: 1` | The version of the file format. Saving a file adds it; a file without it is format 1. |
 

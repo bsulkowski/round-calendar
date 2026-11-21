@@ -275,8 +275,8 @@ test('settings written as text read back the same, in either language', () => {
     'rok: 2027\nod: wiosna\ngóra: lato\npierwszy dzień: śr\nkierunek: przeciwnie\ndni tygodnia: do środka\npierścienie: brak',
     'year: 2028\ntop: january\nrings: counters, zodiac, seasons\ncounter: months from 31.01.2028 to 12\ncounter: weeks from 4.01.2027 week\ntimezone: -5:30',
     'rok: 2026\nod: 1.09.2027\ngóra: 15.03.2028\nkolory: weekend=#eee, linie=#123456\ntytuł: A.D. 2027\npodpis: jeden\npodpis: dwa',
-    'rok: 2026\ntytuł: Rok\ntytuł: szkolny\nwnętrze: 2',
-    'year: 2026\ntitle: none\ninside: 0.5',
+    'rok: 2026\ntytuł: Rok\ntytuł: szkolny\nwnętrze: 4',
+    'year: 2026\ntitle: none\ninside: 1',
   ];
   for (const text of texts) {
     const cal = parseCalendar(text, 'pl', 2026);
@@ -291,28 +291,27 @@ test('settings written as text read back the same, in either language', () => {
 test('the centre: rows of text, no text; the size of the inside', () => {
   const cal = (text: string) => parseCalendar(text, 'pl', 2026);
   assert.deepEqual(cal('').title, []);
-  assert.equal(cal('').inside, 1.5);
+  assert.equal(cal('').inside, 3);
   assert.deepEqual(cal('tytuł: Rok\ntytuł: szkolny').title, ['Rok', 'szkolny']);
   assert.equal(cal('tytuł: Rok\ntytuł: brak').title, null);
   assert.deepEqual(cal('tytuł: brak\ntytuł: 2026').title, ['2026']);
   assert.equal(cal('wnętrze: 2').inside, 2);
-  assert.equal(cal('wnętrze: 2,5').inside, 2.5);
-  assert.equal(cal('inside: 0.5').inside, 0.5);
+  assert.equal(cal('inside: 5').inside, 5);
   // Any other size reads as the nearest step.
-  assert.equal(cal('wnętrze: 1,3').inside, 1.5);
-  assert.equal(cal('wnętrze: 0,1').inside, 0.5);
-  assert.equal(cal('wnętrze: 7').inside, 2.5);
+  assert.equal(cal('wnętrze: 2,6').inside, 3);
+  assert.equal(cal('wnętrze: 0.3').inside, 1);
+  assert.equal(cal('wnętrze: 9').inside, 5);
   for (const bad of ['wnętrze: 0', 'wnętrze: duże', 'wnętrze: -1', 'wnętrze: 40%']) {
     assert.equal(cal(bad).issues.length, 1, bad);
-    assert.equal(cal(bad).inside, 1.5, bad);
+    assert.equal(cal(bad).inside, 3, bad);
   }
-  assert.equal(formatCalendar(cal('wnętrze: 2,5'), 'pl'), 'rok: 2026\nwnętrze: 2,5\n');
-  assert.equal(formatCalendar(cal('wnętrze: 2,5'), 'en'), 'year: 2026\ninside: 2.5\n');
+  assert.equal(formatCalendar(cal('wnętrze: 5'), 'pl'), 'rok: 2026\nwnętrze: 5\n');
+  assert.equal(formatCalendar(cal('wnętrze: 5'), 'en'), 'year: 2026\ninside: 5\n');
   const rows = (text: string) => (renderCalendar(cal(text), 'pl').match(/<g class="centre">(.*?)<\/g>/)?.[1].match(/<text/g) ?? []).length;
   assert.equal(rows(''), 1);
   assert.equal(rows('tytuł: a\ntytuł: b\ntytuł: c'), 3);
   assert.equal(rows('tytuł: brak'), 0);
-    for (const text of ['wnętrze: 2,5\ntytuł: x\ntytuł: y', 'wnętrze: 0,5\npierścienie: pory roku, zodiak\nlicznik: tygodnie od 1.09 x\nlicznik: miesiące od 1.01 y']) {
+    for (const text of ['wnętrze: 5\ntytuł: x\ntytuł: y', 'wnętrze: 1\npierścienie: pory roku, zodiak\nlicznik: tygodnie od 1.09 x\nlicznik: miesiące od 1.01 y']) {
     assert.ok(!renderCalendar(cal(text), 'pl').includes('NaN'), text);
   }
   // With the same inside, the months and the days stay in place whatever bands are chosen.

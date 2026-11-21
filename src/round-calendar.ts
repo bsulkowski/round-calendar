@@ -149,7 +149,7 @@ export interface Calendar {
   tz: number; // minutes east of UTC, for the dates of equinoxes and solstices
   colors: Record<string, string>; // 'weekend', 'lines'
   title: string[] | null; // lines of text in the centre; [] = the year, null = no text
-  inside: number; // area of everything inside the months band, in weekday rings
+  inside: number; // area of everything inside the months band, in months bands
   signature: string[];
   issues: Issue[];
 }
@@ -221,18 +221,17 @@ export const DEFAULT_COLORS: Record<string, string> = { weekend: '#eaeaea', line
 const NONE = new Set(['brak', 'none', '-']);
 
 /**
- * The area of the inside — the year and the bands inside the months — measured in weekday rings,
- * the unit the whole disc is built of: the steps and the default. Outside it there are always 7½
- * rings (the days and the months), so the months and the days stay in place whatever bands are
- * chosen. ½ ring is a quarter of the radius, 2½ rings a half.
+ * The area of the inside — the year and the bands inside the months — counted in months bands:
+ * the one band that always stands in the same place and has the same size. The year takes as
+ * much as one, and so do the seasons and the zodiac by default. Outside the inside there are
+ * always 15 (the months and the days, each weekday ring two), so the months and the days stay in
+ * place whatever bands are chosen; 1 is a quarter of the radius, 5 a half.
  */
-export const INSIDE_STEPS = [0.5, 1, 1.5, 2, 2.5];
-export const DEFAULT_INSIDE = 1.5;
+export const INSIDE_STEPS = [1, 2, 3, 4, 5];
+export const DEFAULT_INSIDE = 3;
 /** The step nearest to a number, so any size reads as one of the steps. */
 const nearestInside = (v: number) =>
   INSIDE_STEPS.reduce((a, b) => (Math.abs(b - v) < Math.abs(a - v) ? b : a));
-/** A step as written in a language: 1,5 in Polish, 1.5 in English. */
-export const showInside = (v: number, lang: Lang) => (lang === 'pl' ? String(v).replace('.', ',') : String(v));
 
 const MSG: Record<Lang, Record<string, string>> = {
   en: {
@@ -249,7 +248,7 @@ const MSG: Record<Lang, Record<string, string>> = {
     order: 'the end is before the start',
     tz: 'write a time zone as +1 or -5:30',
     color: 'write a colour as weekend=#hex or lines=#hex',
-    inside: 'write the size of the inside in weekday rings: ' + INSIDE_STEPS.join(', '),
+    inside: 'write the size of the inside in months bands: ' + INSIDE_STEPS.join(', '),
     date: 'there is no such date: {0}',
     outside: '{0} is not in this calendar ({1}–{2})',
     format: 'these settings were saved in format {0}, newer than this page knows (1); they may not show as intended',
@@ -268,7 +267,7 @@ const MSG: Record<Lang, Record<string, string>> = {
     order: 'koniec jest przed początkiem',
     tz: 'wpisz strefę jako +1 albo -5:30',
     color: 'wpisz kolor jako weekend=#hex albo linie=#hex',
-    inside: 'wpisz wielkość wnętrza w pierścieniach dnia: ' + INSIDE_STEPS.map((v) => showInside(v, 'pl')).join('; '),
+    inside: 'wpisz wielkość wnętrza w pasach miesięcy: ' + INSIDE_STEPS.join(', '),
     date: 'nie ma takiej daty: {0}',
     outside: '{0} nie wypada w tym kalendarzu ({1}–{2})',
     format: 'ustawienia zapisano w formacie {0}, nowszym niż zna ta strona (1); mogą wyglądać inaczej, niż zamierzono',
@@ -532,7 +531,7 @@ export function formatCalendar(cal: Calendar, lang: Lang): string {
   if (colors.length) put('colors', colors.join(', '));
   if (cal.title === null) put('title', w.none);
   else for (const t of cal.title) put('title', t);
-  if (cal.inside !== DEFAULT_INSIDE) put('inside', showInside(cal.inside, lang));
+  if (cal.inside !== DEFAULT_INSIDE) put('inside', String(cal.inside));
   for (const s of cal.signature) put('signature', s);
   return lines.join('\n') + '\n';
 }
@@ -733,13 +732,14 @@ export function renderCalendar(cal: Calendar, lang: Lang): string {
     }))
     : [{ kind: r, segs: L.segments[r]!, size: BELT_SIZE[r], font: BELT_FONT[r], ink: BELT_INK[r], name: '' }]));
   // Areas are counted in weekday rings. The months and the days keep their parts; the inside
-  // (the year and the bands within the months) has its own number of rings, shared in proportion
-  // to the usual sizes. So the months and the days stay in place whatever bands are chosen.
+  // (the year and the bands within the months) has its own size in months bands, shared in
+  // proportion to the usual sizes. So the months and the days stay in place whatever bands are chosen.
+  const inside = cal.inside * BELT_SIZE.months;
   const inner = bands.slice(0, -1);
-  const share = cal.inside / (BELT_SIZE.year + inner.reduce((s, b) => s + b.size, 0));
+  const share = inside / (BELT_SIZE.year + inner.reduce((s, b) => s + b.size, 0));
   for (const b of inner) b.size *= share;
   const centre = BELT_SIZE.year * share;
-  const total = cal.inside + BELT_SIZE.months + 7;
+  const total = inside + BELT_SIZE.months + 7;
   const R = W / 2 - M;
   const cx = W / 2;
   const cy = H / 2;
