@@ -101,6 +101,13 @@ const ZODIAC: Record<Lang, string[]> = {
   en: ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'],
   pl: ['baran', 'byk', 'bliźnięta', 'rak', 'lew', 'panna', 'waga', 'skorpion', 'strzelec', 'koziorożec', 'wodnik', 'ryby'],
 };
+// Short names, for `names: short`: months in three letters, the zodiac as its signs (with the
+// text-style selector, so that they print as letters, not as coloured emoji).
+const MONTHS_SHORT: Record<Lang, string[]> = {
+  en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  pl: ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'],
+};
+const ZODIAC_SIGNS = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'].map((c) => c + '\uFE0E');
 // Conventional sign boundaries, as printed in calendars; they drift by a day between years.
 const ZODIAC_STARTS: [number, number][] = [
   [3, 21], [4, 20], [5, 21], [6, 21], [7, 23], [8, 23], [9, 23], [10, 23], [11, 23], [12, 22], [1, 20], [2, 19],
@@ -144,6 +151,7 @@ export interface Calendar {
   firstDay: number; // weekday the week starts with on the radius: 0 = Monday … 6 = Sunday
   clockwise: boolean; // weeks go round clockwise (else anticlockwise)
   outwards: boolean; // a week runs from the centre outwards (else inwards)
+  short: boolean; // short names of the months and the zodiac signs
   rings: Ring[]; // from the centre outwards, between the year and the months
   counters: Counter[]; // each its own thin band, where 'counters' stands in the rings
   tz: number; // minutes east of UTC, for the dates of equinoxes and solstices
@@ -162,6 +170,7 @@ const KEYS: Record<string, string> = {
   'poczatek tygodnia': 'firstDay', 'first day': 'firstDay', 'week starts': 'firstDay', 'week start': 'firstDay',
   kierunek: 'direction', direction: 'direction',
   'dni tygodnia': 'weekdays', weekdays: 'weekdays',
+  nazwy: 'names', names: 'names',
   pierścienie: 'rings', pierscienie: 'rings', rings: 'rings',
   strefa: 'tz', 'strefa czasowa': 'tz', timezone: 'tz', 'time zone': 'tz',
   kolory: 'colors', colors: 'colors', colours: 'colors',
@@ -208,6 +217,9 @@ const CLOCKWISE: Record<string, boolean> = {};
 const OUTWARDS: Record<string, boolean> = {};
 ['od środka', 'od srodka', 'na zewnątrz', 'na zewnatrz', 'outwards', 'outward', 'out'].forEach((v) => { OUTWARDS[v] = true; });
 ['do środka', 'do srodka', 'do wewnątrz', 'do wewnatrz', 'inwards', 'inward', 'in'].forEach((v) => { OUTWARDS[v] = false; });
+const SHORT: Record<string, boolean> = {};
+['pełne', 'pelne', 'full', 'long'].forEach((v) => { SHORT[v] = false; });
+['skrócone', 'skrocone', 'krótkie', 'krotkie', 'short', 'abbreviated'].forEach((v) => { SHORT[v] = true; });
 
 const UNIT_ALIAS: Record<string, Unit> = {
   tygodnie: 'weeks', tydzień: 'weeks', tydzien: 'weeks', tyg: 'weeks', weeks: 'weeks', week: 'weeks',
@@ -244,6 +256,7 @@ const MSG: Record<Lang, Record<string, string>> = {
     ring: 'unknown ring “{0}” (seasons, zodiac, counters)',
     direction: 'write clockwise or anticlockwise',
     weekdays: 'write outwards or inwards',
+    names: 'write full or short',
     counter: 'write a counter as: weeks from 1.09, then if you like to 25.06 or to 40, and a name; weeks or months',
     order: 'the end is before the start',
     tz: 'write a time zone as +1 or -5:30',
@@ -263,6 +276,7 @@ const MSG: Record<Lang, Record<string, string>> = {
     ring: 'nieznany pierścień „{0}” (pory roku, zodiak, liczniki)',
     direction: 'wpisz zgodnie z zegarem albo przeciwnie do zegara',
     weekdays: 'wpisz od środka albo do środka',
+    names: 'wpisz pełne albo skrócone',
     counter: 'wpisz licznik jako: tygodnie od 1.09, dalej ewentualnie do 25.06 albo do 40 i nazwa; tygodnie albo miesiące',
     order: 'koniec jest przed początkiem',
     tz: 'wpisz strefę jako +1 albo -5:30',
@@ -306,6 +320,7 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
     firstDay: 0,
     clockwise: true,
     outwards: true,
+    short: false,
     rings: ['seasons'],
     counters: [],
     tz: 0,
@@ -356,6 +371,8 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
       if (CLOCKWISE[low] === undefined) issues.push({ line: n, message: say('direction') }); else cal.clockwise = CLOCKWISE[low];
     } else if (key === 'weekdays') {
       if (OUTWARDS[low] === undefined) issues.push({ line: n, message: say('weekdays') }); else cal.outwards = OUTWARDS[low];
+    } else if (key === 'names') {
+      if (SHORT[low] === undefined) issues.push({ line: n, message: say('names') }); else cal.short = SHORT[low];
     } else if (key === 'rings') {
       cal.rings = [];
       for (const r of list(low)) {
@@ -482,13 +499,13 @@ export { parseDate, validDate, showDate };
 
 const WORDS: Record<Lang, Record<string, string>> = {
   en: {
-    year: 'year', start: 'from', top: 'top', firstDay: 'first day', direction: 'direction', weekdays: 'weekdays',
+    year: 'year', start: 'from', top: 'top', firstDay: 'first day', direction: 'direction', weekdays: 'weekdays', names: 'names', short: 'short',
     rings: 'rings', counter: 'counter', tz: 'timezone', colors: 'colors', title: 'title', inside: 'inside', signature: 'signature',
     seam: 'seam', anticlockwise: 'anticlockwise', inwards: 'inwards', none: 'none', from: 'from', to: 'to',
     weeks: 'weeks', months: 'months', seasons: 'seasons', zodiac: 'zodiac', counters: 'counters', lines: 'lines',
   },
   pl: {
-    year: 'rok', start: 'od', top: 'góra', firstDay: 'pierwszy dzień', direction: 'kierunek', weekdays: 'dni tygodnia',
+    year: 'rok', start: 'od', top: 'góra', firstDay: 'pierwszy dzień', direction: 'kierunek', weekdays: 'dni tygodnia', names: 'nazwy', short: 'skrócone',
     rings: 'pierścienie', counter: 'licznik', tz: 'strefa', colors: 'kolory', title: 'tytuł', inside: 'wnętrze', signature: 'podpis',
     seam: 'łączenie', anticlockwise: 'przeciwnie do zegara', inwards: 'do środka', none: 'brak', from: 'od', to: 'do',
     weeks: 'tygodnie', months: 'miesiące', seasons: 'pory roku', zodiac: 'zodiak', counters: 'liczniki', lines: 'linie',
@@ -518,6 +535,7 @@ export function formatCalendar(cal: Calendar, lang: Lang): string {
   if (cal.firstDay !== 0) put('firstDay', DAY_WORDS[lang][cal.firstDay]);
   if (!cal.clockwise) put('direction', w.anticlockwise);
   if (!cal.outwards) put('weekdays', w.inwards);
+  if (cal.short) put('names', w.short);
   if (cal.rings.length !== 1 || cal.rings[0] !== 'seasons') put('rings', cal.rings.length ? cal.rings.map((r) => w[r]).join(', ') : w.none);
   for (const c of cal.counters) {
     const until = !c.until ? '' : ` ${w.to} ${c.until.kind === 'count' ? c.until.n : showDate(c.until)}`;
@@ -570,7 +588,9 @@ export function bandSegments(cal: Calendar, r: Range, band: Band, lang: Lang): S
   const seen = new Set<number>();
   const inRange = marks.filter((x) => x.at >= 0 && x.at < r.days).sort((a, b) => a.at - b.at)
     .filter((x) => (seen.has(x.key) ? false : (seen.add(x.key), true)));
-  const names = band === 'seasons' ? SEASONS[lang] : band === 'zodiac' ? ZODIAC[lang] : MONTHS[lang];
+  const names = band === 'seasons' ? SEASONS[lang]
+    : band === 'zodiac' ? (cal.short ? ZODIAC_SIGNS : ZODIAC[lang])
+      : (cal.short ? MONTHS_SHORT[lang] : MONTHS[lang]);
   return inRange.map((x, i) => ({
     from: x.at,
     to: i + 1 < inRange.length ? inRange[i + 1].at : inRange[0].at + r.days,
@@ -680,7 +700,9 @@ const FONT = 'Inter, Arial, Helvetica, sans-serif';
 function textWidth(s: string, size: number): number {
   let w = 0;
   for (const ch of s) {
-    if (' .,:;\'|!/'.includes(ch)) w += 0.28;
+    if (ch === '\uFE0E') continue;
+    if (/[\u2648-\u2653]/.test(ch)) w += 0.85;
+    else if (' .,:;\'|!/'.includes(ch)) w += 0.28;
     else if ('ijlI'.includes(ch)) w += 0.27;
     else if ('ftr()[]-–'.includes(ch)) w += 0.37;
     else if ('mwMW'.includes(ch)) w += 0.88;

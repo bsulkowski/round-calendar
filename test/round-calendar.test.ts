@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   seasonMoment, parseCalendar, renderCalendar, calendarRange, layoutCalendar, counterSegments, counterStart, dateOf, epochDay, weekday,
-  withFormatLine, formatCalendar, MIN_YEAR, MAX_YEAR,
+  withFormatLine, formatCalendar, bandSegments, MIN_YEAR, MAX_YEAR,
 } from '../src/round-calendar.ts';
 import { EXAMPLE } from '../src/examples.ts';
 
@@ -276,6 +276,7 @@ test('settings written as text read back the same, in either language', () => {
     'year: 2028\ntop: january\nrings: counters, zodiac, seasons\ncounter: months from 31.01.2028 to 12\ncounter: weeks from 4.01.2027 week\ntimezone: -5:30',
     'rok: 2026\nod: 1.09.2027\ngóra: 15.03.2028\nkolory: weekend=#eee, linie=#123456\ntytuł: A.D. 2027\npodpis: jeden\npodpis: dwa',
     'rok: 2026\ntytuł: Rok\ntytuł: szkolny\nwnętrze: 4',
+    'rok: 2026\nnazwy: skrócone\npierścienie: zodiak',
     'year: 2026\ntitle: none\ninside: 1',
   ];
   for (const text of texts) {
@@ -320,4 +321,19 @@ test('the centre: rows of text, no text; the size of the inside', () => {
   for (const text of ['', 'pierścienie: pory roku, zodiak', 'pierścienie: zodiak\nlicznik: tygodnie od 1.09 x\nlicznik: miesiące od 1.01 y']) {
     assert.equal(months(text), first, text);
   }
+});
+
+test('short names: months in three letters, the zodiac as signs', () => {
+  const cal = (text: string) => parseCalendar(text, 'pl', 2026);
+  assert.equal(cal('').short, false);
+  assert.equal(cal('nazwy: skrócone').short, true);
+  assert.equal(cal('names: short').short, true);
+  assert.equal(cal('nazwy: pełne').short, false);
+  assert.equal(cal('nazwy: małe').issues.length, 1);
+  const c = cal('nazwy: skrócone\npierścienie: zodiak');
+  const r = calendarRange(c);
+  assert.deepEqual(bandSegments(c, r, 'months', 'pl').map((s) => s.label).slice(0, 3), ['sty', 'lut', 'mar']);
+  assert.deepEqual(bandSegments(c, r, 'months', 'en').map((s) => s.label).slice(0, 2), ['Jan', 'Feb']);
+  assert.ok(bandSegments(c, r, 'zodiac', 'pl').every((s) => /^[\u2648-\u2653]\uFE0E$/.test(s.label)));
+  assert.ok(renderCalendar(c, 'pl').includes('♑\uFE0E'));
 });
