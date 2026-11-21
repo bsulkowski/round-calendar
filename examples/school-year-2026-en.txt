@@ -3,11 +3,11 @@
 
 format: 1
 year: 2026
-from: 1.09          # a school year; a season works too: from: spring
-top: winter         # what is at the top: seam, a season, a month or a date
+from: 1.09          # a school year; an equinox or solstice works too: from: March equinox
+top: December solstice  # what is at the top: seam, an equinox or solstice, a month or a date
 first day: mon      # the weekday the week starts with on the radius; wed puts the weekend in the middle
 direction: clockwise  # or anticlockwise
 weekdays: outwards  # or inwards: the week runs from the rim to the centre
-rings: seasons      # bands between the year and the months: seasons, zodiac, counters
+rings: counters     # bands between the year and the months: zodiac, counters
 timezone: +1
 counter: weeks from 1.09 to 25.06 school weeks   # numbered from 1; ends on a day or a number (to 40); the name is optional

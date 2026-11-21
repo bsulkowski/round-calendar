@@ -1,12 +1,13 @@
 // Round calendar: a whole year on one disc. Weeks go round the edge, the seven weekdays are
-// rings, and seasons, the zodiac and months sit inside as bands. The year can start on any day
-// and the disc can be turned so that any part of it is at the top.
+// rings, and the months, the zodiac and counters sit inside as bands. The year can start on any
+// day, an equinox or a solstice among them, and the disc can be turned so that any part of it
+// is at the top.
 //
 // Pure functions with no DOM access: the same code draws the sheet in the browser,
 // at build time and in Node.
 //
 // Descends from an older generator in this repository (Groovy, 2018), which had the year
-// and the seasons typed in by hand. Here they are computed for any year.
+// and the equinoxes typed in by hand. Here they are computed for any year.
 
 export type Lang = 'en' | 'pl';
 
@@ -17,7 +18,7 @@ export const TOOL_VERSION = '1.0';
 export const FORMAT_VERSION = 1;
 
 export const MIN_YEAR = 1583; // first full year of the Gregorian calendar
-export const MAX_YEAR = 2998; // the season formulas below hold up to 3000; a year may run into the next
+export const MAX_YEAR = 2998; // the equinox formulas below hold up to 3000; a year may run into the next
 
 /* ---------- dates ---------- */
 
@@ -79,7 +80,8 @@ export function seasonMoment(y: number, which: number): number {
   return (jde - 2440587.5) * 86400000 - 69000;
 }
 
-/** Epoch day on which a season starts, in a time zone given in minutes east of UTC. */
+/** Epoch day of an equinox or solstice (0 March, 1 June, 2 September, 3 December), in a time
+ * zone given in minutes east of UTC. */
 export const seasonDay = (y: number, which: number, tz: number) =>
   Math.floor((seasonMoment(y, which) + tz * 60000) / 86400000);
 
@@ -93,9 +95,11 @@ const WEEKDAYS: Record<Lang, string[]> = {
   en: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
   pl: ['pn', 'wt', 'śr', 'cz', 'pt', 'sb', 'nd'],
 };
-const SEASONS: Record<Lang, string[]> = {
-  en: ['spring', 'summer', 'autumn', 'winter'],
-  pl: ['wiosna', 'lato', 'jesień', 'zima'],
+// Equinoxes and solstices are named by their months, not by seasons: which season one of them
+// begins depends on the hemisphere.
+const POINTS: Record<Lang, string[]> = {
+  en: ['March equinox', 'June solstice', 'September equinox', 'December solstice'],
+  pl: ['równonoc marcowa', 'przesilenie czerwcowe', 'równonoc wrześniowa', 'przesilenie grudniowe'],
 };
 const ZODIAC: Record<Lang, string[]> = {
   en: ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'],
@@ -118,7 +122,7 @@ const ZODIAC_STARTS: [number, number][] = [
 
 /** The bands that can be chosen. The year in the middle and the months next to the days are
  * always there. */
-export type Ring = 'seasons' | 'zodiac' | 'counters';
+export type Ring = 'zodiac' | 'counters';
 
 /** A counter: weeks or months numbered from a day (1, 2, 3…), each number standing over the days
  * it holds. A day without a year repeats every year and the count starts again from 1 (weeks of
@@ -131,14 +135,15 @@ export interface Counter { unit: Unit; from: DayDate; until?: Until; name: strin
 /** A day of the year without its year (14.03), or with one (14.03.2027). */
 export interface DayDate { m: number; d: number; y?: number }
 
-/** Where the calendar starts: a date, or the start of a season (its equinox or solstice). */
-export type Start = ({ kind: 'date' } & DayDate) | { kind: 'season'; which: number };
+/** Where the calendar starts: a date, or an equinox or solstice (`which` as in seasonDay). */
+export type Start = ({ kind: 'date' } & DayDate) | { kind: 'point'; which: number };
 
 /** What is at the top of the disc: the seam between the end and the start of the year (the column
- * with the weekday names), the middle of a season or a month, or a day. */
+ * with the weekday names), the week of an equinox or solstice, the middle of a month, or the week
+ * of a day. */
 export type Top =
   | { kind: 'seam' }
-  | { kind: 'season'; which: number }
+  | { kind: 'point'; which: number }
   | { kind: 'month'; m: number }
   | ({ kind: 'date' } & DayDate);
 
@@ -195,7 +200,13 @@ const DAY_ALIAS = aliases([
   'śr sr śro sro środa sroda wed wednesday', 'cz czw czwartek thu thur thurs thursday',
   'pt pią pia piątek piatek fri friday', 'sb sob sobota sat saturday', 'nd nie ndz niedziela sun sunday',
 ]);
-const SEASON_ALIAS = aliases(['wiosna spring', 'lato summer', 'jesień jesien autumn fall', 'zima winter']);
+const POINT_ALIAS: Record<string, number> = {};
+[
+  ['równonoc marcowa', 'rownonoc marcowa', 'march equinox'],
+  ['przesilenie czerwcowe', 'june solstice'],
+  ['równonoc wrześniowa', 'rownonoc wrzesniowa', 'september equinox'],
+  ['przesilenie grudniowe', 'december solstice'],
+].forEach((names, i) => names.forEach((n) => { POINT_ALIAS[n] = i; }));
 const MONTH_ALIAS = aliases([
   'styczeń styczen sty january jan', 'luty lut february feb', 'marzec mar march',
   'kwiecień kwiecien kwi april apr', 'maj may', 'czerwiec cze june jun', 'lipiec lip july jul',
@@ -205,7 +216,6 @@ const MONTH_ALIAS = aliases([
 const SEAM = new Set(['łączenie', 'laczenie', 'szew', 'seam', 'join']);
 
 const RING_ALIAS: Record<string, Ring> = {
-  'pory roku': 'seasons', pory: 'seasons', seasons: 'seasons',
   zodiak: 'zodiac', zodiac: 'zodiac',
   liczniki: 'counters', licznik: 'counters', counters: 'counters', counter: 'counters',
 };
@@ -245,7 +255,7 @@ const NONE = new Set(['brak', 'none', '-']);
 /**
  * The area of the inside — the year and the bands inside the months — counted in months bands:
  * the one band that always stands in the same place and has the same size. The year takes as
- * much as one, and so do the seasons and the zodiac by default. Outside the inside there are
+ * much as one, and so does the zodiac by default. Outside the inside there are
  * always 15 (the months and the days, each weekday ring two), so the months and the days stay in
  * place whatever bands are chosen; 1 is a quarter of the radius, 5 a half.
  */
@@ -260,10 +270,10 @@ const MSG: Record<Lang, Record<string, string>> = {
     key: 'unknown setting “{0}”',
     line: 'a line should be a setting: name, colon, value (year: 2027)',
     year: 'write a year between ' + MIN_YEAR + ' and ' + MAX_YEAR,
-    start: 'write a date (1.09, 1.09.2026) or a season (spring)',
-    top: 'write seam, a season (winter), a month (january) or a date (1.09)',
+    start: 'write a date (1.09, 1.09.2026) or an equinox or solstice (March equinox)',
+    top: 'write seam, an equinox or solstice (December solstice), a month (january) or a date (1.09)',
     day: 'unknown day “{0}”',
-    ring: 'unknown ring “{0}” (seasons, zodiac, counters)',
+    ring: 'unknown ring “{0}” (zodiac, counters)',
     direction: 'write clockwise or anticlockwise',
     weekdays: 'write outwards or inwards',
     monthNames: 'write full, short or roman',
@@ -334,7 +344,7 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
     outwards: true,
     monthNames: 'full',
     zodiacNames: 'full',
-    rings: ['seasons'],
+    rings: [],
     counters: [],
     tz: 0,
     colors: {},
@@ -367,14 +377,14 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
       const date = parseDate(low);
       if (date && !validDate(date)) issues.push({ line: n, message: say('date', showDate(date)) });
       else if (date) { cal.start = { kind: 'date', ...date }; startLine = n; }
-      else if (SEASON_ALIAS[low] !== undefined) { cal.start = { kind: 'season', which: SEASON_ALIAS[low] }; startLine = n; }
+      else if (POINT_ALIAS[low] !== undefined) { cal.start = { kind: 'point', which: POINT_ALIAS[low] }; startLine = n; }
       else issues.push({ line: n, message: say('start') });
     } else if (key === 'top') {
       const date = parseDate(low);
       if (date && !validDate(date)) issues.push({ line: n, message: say('date', showDate(date)) });
       else if (date) { cal.top = { kind: 'date', ...date }; topLine = n; }
       else if (SEAM.has(low)) cal.top = { kind: 'seam' };
-      else if (SEASON_ALIAS[low] !== undefined) cal.top = { kind: 'season', which: SEASON_ALIAS[low] };
+      else if (POINT_ALIAS[low] !== undefined) cal.top = { kind: 'point', which: POINT_ALIAS[low] };
       else if (MONTH_ALIAS[low] !== undefined) cal.top = { kind: 'month', m: MONTH_ALIAS[low] + 1 };
       else issues.push({ line: n, message: say('top') });
     } else if (key === 'firstDay') {
@@ -479,12 +489,12 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
 }
 
 /** The days on the disc: the first one (epoch day) and how many. One year: up to the day before
- * the same date a year later, or before the same season starts again. */
+ * the same date a year later, or before the same equinox or solstice comes again. */
 export interface Range { start: number; days: number }
 
 export function calendarRange(cal: Calendar): Range {
   const y = cal.year, s = cal.start;
-  if (s.kind === 'season') {
+  if (s.kind === 'point') {
     const a = seasonDay(y, s.which, cal.tz);
     return { start: a, days: seasonDay(y + 1, s.which, cal.tz) - a };
   }
@@ -507,7 +517,7 @@ export function occurrence(r: Range, { m, d, y }: DayDate): number | undefined {
 
 /** Names the form and the written settings use, in the language of the page. */
 export function names(lang: Lang) {
-  return { months: MONTHS[lang], seasons: SEASONS[lang], weekdays: WEEKDAYS[lang] };
+  return { months: MONTHS[lang], points: POINTS[lang], weekdays: WEEKDAYS[lang] };
 }
 
 export { parseDate, validDate, showDate };
@@ -518,14 +528,14 @@ const WORDS: Record<Lang, Record<string, string>> = {
     full: 'full', short: 'short', roman: 'roman', signs: 'signs',
     rings: 'rings', counter: 'counter', tz: 'timezone', colors: 'colors', title: 'title', inside: 'inside', signature: 'signature',
     seam: 'seam', anticlockwise: 'anticlockwise', inwards: 'inwards', none: 'none', from: 'from', to: 'to',
-    weeks: 'weeks', months: 'months', seasons: 'seasons', zodiac: 'zodiac', counters: 'counters', lines: 'lines',
+    weeks: 'weeks', months: 'months', zodiac: 'zodiac', counters: 'counters', lines: 'lines',
   },
   pl: {
     year: 'rok', start: 'od', top: 'góra', firstDay: 'pierwszy dzień', direction: 'kierunek', weekdays: 'dni tygodnia',
     full: 'pełne', short: 'skrócone', roman: 'rzymskie', signs: 'znaki',
     rings: 'pierścienie', counter: 'licznik', tz: 'strefa', colors: 'kolory', title: 'tytuł', inside: 'wnętrze', signature: 'podpis',
     seam: 'łączenie', anticlockwise: 'przeciwnie do zegara', inwards: 'do środka', none: 'brak', from: 'od', to: 'do',
-    weeks: 'tygodnie', months: 'miesiące', seasons: 'pory roku', zodiac: 'zodiak', counters: 'liczniki', lines: 'linie',
+    weeks: 'tygodnie', months: 'miesiące', zodiac: 'zodiak', counters: 'liczniki', lines: 'linie',
   },
 };
 const DAY_WORDS: Record<Lang, string[]> = {
@@ -543,10 +553,10 @@ export function formatCalendar(cal: Calendar, lang: Lang): string {
   const lines: string[] = [`${w.year}: ${cal.year}`];
   const put = (key: string, value: string) => lines.push(`${w[key]}: ${value}`);
   const st = cal.start;
-  if (st.kind === 'season') put('start', SEASONS[lang][st.which]);
+  if (st.kind === 'point') put('start', POINTS[lang][st.which]);
   else if (st.m !== 1 || st.d !== 1) put('start', showDate({ m: st.m, d: st.d }));
   const t = cal.top;
-  if (t.kind === 'season') put('top', SEASONS[lang][t.which]);
+  if (t.kind === 'point') put('top', POINTS[lang][t.which]);
   else if (t.kind === 'month') put('top', MONTHS[lang][t.m - 1]);
   else if (t.kind === 'date') put('top', showDate(t));
   if (cal.firstDay !== 0) put('firstDay', DAY_WORDS[lang][cal.firstDay]);
@@ -554,7 +564,7 @@ export function formatCalendar(cal: Calendar, lang: Lang): string {
   if (!cal.outwards) put('weekdays', w.inwards);
   if (cal.monthNames !== 'full') put('months', w[cal.monthNames]);
   if (cal.zodiacNames !== 'full') put('zodiac', w[cal.zodiacNames]);
-  if (cal.rings.length !== 1 || cal.rings[0] !== 'seasons') put('rings', cal.rings.length ? cal.rings.map((r) => w[r]).join(', ') : w.none);
+  if (cal.rings.length) put('rings', cal.rings.map((r) => w[r]).join(', '));
   for (const c of cal.counters) {
     const until = !c.until ? '' : ` ${w.to} ${c.until.kind === 'count' ? c.until.n : showDate(c.until)}`;
     put('counter', `${w[c.unit]} ${w.from} ${showDate(c.from)}${until}${c.name ? ' ' + c.name : ''}`);
@@ -590,7 +600,7 @@ export function withFormatLine(text: string): string {
  * across the seam into the start of the range. */
 export interface Segment { from: number; to: number; label: string; key: number }
 
-type Band = 'seasons' | 'zodiac' | 'months';
+type Band = 'zodiac' | 'months';
 
 /** Stretches of a band. The band is a cycle: the stretch around the seam is one, even though
  * its two ends belong to different years (summer of 2027 joins summer of 2026). */
@@ -598,16 +608,14 @@ export function bandSegments(cal: Calendar, r: Range, band: Band, lang: Lang): S
   const [y0] = dateOf(r.start);
   const marks: { at: number; key: number }[] = [];
   for (const yy of [y0 - 1, y0, y0 + 1]) {
-    if (band === 'seasons') for (let k = 0; k < 4; k++) marks.push({ at: seasonDay(yy, k, cal.tz) - r.start, key: k });
     if (band === 'months') for (let m = 1; m <= 12; m++) marks.push({ at: epochDay(yy, m, 1) - r.start, key: m - 1 });
     if (band === 'zodiac') ZODIAC_STARTS.forEach(([m, d], k) => marks.push({ at: epochDay(yy, m, d) - r.start, key: k }));
   }
-  // Each boundary once: a range of a year can catch a season's start twice, a day apart.
+  // Each boundary once: a range of a year can catch the same start twice, a day apart.
   const seen = new Set<number>();
   const inRange = marks.filter((x) => x.at >= 0 && x.at < r.days).sort((a, b) => a.at - b.at)
     .filter((x) => (seen.has(x.key) ? false : (seen.add(x.key), true)));
-  const names = band === 'seasons' ? SEASONS[lang]
-    : band === 'zodiac' ? (cal.zodiacNames === 'signs' ? ZODIAC_SIGNS : ZODIAC[lang])
+  const names = band === 'zodiac' ? (cal.zodiacNames === 'signs' ? ZODIAC_SIGNS : ZODIAC[lang])
       : cal.monthNames === 'short' ? MONTHS_SHORT[lang] : cal.monthNames === 'roman' ? MONTHS_ROMAN : MONTHS[lang];
   return inRange.map((x, i) => ({
     from: x.at,
@@ -686,7 +694,7 @@ export function layoutCalendar(cal: Calendar, lang: Lang): Layout {
   const columns = Math.ceil((offset + N) / 7) + 1;
   const step = 360 / columns;
   const segments: Partial<Record<Band, Segment[]>> = {};
-  for (const b of ['seasons', 'zodiac', 'months'] as Band[]) segments[b] = bandSegments(cal, range, b, lang);
+  for (const b of ['zodiac', 'months'] as Band[]) segments[b] = bandSegments(cal, range, b, lang);
 
   // Angles before turning; the turn puts the chosen thing at the top (270°).
   const rel = (x: number) => step * (1 + (offset + x) / 7);
@@ -696,9 +704,12 @@ export function layoutCalendar(cal: Calendar, lang: Lang): Layout {
   if (t.kind === 'date') {
     const i = occurrence(range, t) ?? 0;
     anchor = step * (1 + Math.floor((offset + i) / 7) + 0.5);
-  } else if (t.kind === 'season' || t.kind === 'month') {
-    const key = t.kind === 'season' ? t.which : t.m - 1;
-    const s = segments[t.kind === 'season' ? 'seasons' : 'months']!.find((x) => x.key === key);
+  } else if (t.kind === 'point') {
+    const [y0] = dateOf(range.start);
+    const i = [y0, y0 + 1].map((y) => seasonDay(y, t.which, cal.tz) - range.start).find((x) => x >= 0 && x < N) ?? 0;
+    anchor = step * (1 + Math.floor((offset + i) / 7) + 0.5);
+  } else if (t.kind === 'month') {
+    const s = segments.months!.find((x) => x.key === t.m - 1);
     if (s) anchor = (rel(s.from) + segEnd(s)) / 2;
   }
   const counters = cal.counters.map((c) => counterSegments(c, range));
@@ -739,9 +750,9 @@ const r2 = (v: number) => Math.round(v * 100) / 100;
 
 // Sizes are shares of the disc's area; a counter is a thin band, one per counter.
 type Part = Ring | 'year' | 'months';
-const BELT_SIZE: Record<Part, number> = { year: 0.5, seasons: 0.5, zodiac: 0.5, counters: 0.3, months: 0.5 };
-const BELT_FONT: Record<Part, number> = { year: 0, seasons: 16, zodiac: 11, counters: 9, months: 13 };
-const BELT_INK: Record<Part, string> = { year: '#959595', seasons: '#959595', zodiac: '#959595', counters: '#7a7a7a', months: '#6b6b6b' };
+const BELT_SIZE: Record<Part, number> = { year: 0.5, zodiac: 0.5, counters: 0.3, months: 0.5 };
+const BELT_FONT: Record<Part, number> = { year: 0, zodiac: 11, counters: 9, months: 13 };
+const BELT_INK: Record<Part, string> = { year: '#959595', zodiac: '#959595', counters: '#7a7a7a', months: '#6b6b6b' };
 
 export function renderCalendar(cal: Calendar, lang: Lang): string {
   const { firstDay, rings } = cal;

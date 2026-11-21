@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  seasonMoment, parseCalendar, renderCalendar, calendarRange, layoutCalendar, counterSegments, counterStart, dateOf, epochDay, weekday,
+  seasonMoment, seasonDay, parseCalendar, renderCalendar, calendarRange, layoutCalendar, counterSegments, counterStart, dateOf, epochDay, weekday,
   withFormatLine, formatCalendar, bandSegments, MIN_YEAR, MAX_YEAR,
 } from '../src/round-calendar.ts';
 import { EXAMPLE } from '../src/examples.ts';
@@ -60,14 +60,16 @@ test('the range: a calendar year by default, otherwise from the given day for a 
   assert.deepEqual(range('rok: 2027\nod: 29.02'), { from: '2027-01-01', to: '2027-12-31', days: 365, issues: [2] });
 });
 
-test('the range from a season runs to the day before it starts again', () => {
-  // Spring 2027 starts on 20 March in Poland; spring 2028 on 20 March.
-  assert.deepEqual(range('rok: 2027\nod: wiosna\nstrefa: +1'), { from: '2027-03-20', to: '2028-03-19', days: 366, issues: [] });
-  // Winter 2026 starts on 21 December, winter 2027 on 22 December.
-  assert.deepEqual(range('rok: 2026\nod: zima\nstrefa: +1'), { from: '2026-12-21', to: '2027-12-21', days: 366, issues: [] });
+test('the range from an equinox or solstice runs to the day before it comes again', () => {
+  // The March equinox 2027 falls on 20 March in Poland; in 2028 on 20 March.
+  assert.deepEqual(range('rok: 2027\nod: równonoc marcowa\nstrefa: +1'), { from: '2027-03-20', to: '2028-03-19', days: 366, issues: [] });
+  // The December solstice 2026 falls on 21 December, in 2027 on 22 December.
+  assert.deepEqual(range('rok: 2026\nod: przesilenie grudniowe\nstrefa: +1'), { from: '2026-12-21', to: '2027-12-21', days: 366, issues: [] });
   // The time zone moves a moment near midnight: the 2027 December solstice is at 02:42 UTC.
-  assert.equal(range('rok: 2027\nod: zima\nstrefa: -5').from, '2027-12-21');
-  assert.equal(range('rok: 2027\nod: zima\nstrefa: +1').from, '2027-12-22');
+  assert.equal(range('rok: 2027\nod: przesilenie grudniowe\nstrefa: -5').from, '2027-12-21');
+  assert.equal(range('year: 2027\nfrom: December solstice\ntimezone: +1').from, '2027-12-22');
+  // Seasons are not named: which one starts depends on the hemisphere.
+  assert.deepEqual(range('rok: 2027\nod: wiosna').issues, [2]);
 });
 
 test('directions: clockwise and outwards by default, either can be turned', () => {
@@ -84,14 +86,15 @@ test('directions: clockwise and outwards by default, either can be turned', () =
 
 test('the year and the months are always there; the other bands are chosen', () => {
   const rings = (text: string) => { const c = parseCalendar(text, 'pl', 2026); return [c.rings, c.issues.length]; };
-  assert.deepEqual(rings(''), [['seasons'], 0]);
-  assert.deepEqual(rings('pierścienie: rok, zodiak, pory roku, miesiące'), [['zodiac', 'seasons'], 0]);
+  assert.deepEqual(rings(''), [[], 0]);
+  assert.deepEqual(rings('pierścienie: rok, liczniki, zodiak, miesiące'), [['counters', 'zodiac'], 0]);
+  assert.deepEqual(rings('pierścienie: pory roku'), [[], 1]);
   assert.deepEqual(rings('pierścienie: brak'), [[], 0]);
   assert.deepEqual(rings('pierścienie: tygodnie'), [[], 1]);
 });
 
 test('anticlockwise, the chosen thing is still at the top', () => {
-  for (const text of ['kierunek: przeciwnie\nrok: 2027', 'kierunek: przeciwnie\nrok: 2027\ngóra: 1.09', 'kierunek: przeciwnie\nrok: 2026\nod: 1.09\ngóra: zima']) {
+  for (const text of ['kierunek: przeciwnie\nrok: 2027', 'kierunek: przeciwnie\nrok: 2027\ngóra: 1.09', 'kierunek: przeciwnie\nrok: 2026\nod: 1.09\ngóra: przesilenie grudniowe', 'kierunek: przeciwnie\nrok: 2026\nod: 1.09\ngóra: luty']) {
     const cw = atTop(text.replace('kierunek: przeciwnie\n', '')), ccw = atTop(text);
     assert.equal(ccw.L.turn, -1);
     assert.ok(Math.abs(ccw.top - cw.top) < 1e-9, text);
@@ -116,10 +119,19 @@ test('a date at the top: its week column is centred on top', () => {
   }
 });
 
-test('a season or a month at the top: the middle of its stretch is on top', () => {
+test('an equinox or solstice at the top: its week column is centred on top', () => {
+  for (const [text, which] of [['rok: 2027\ngóra: przesilenie grudniowe', 3], ['rok: 2026\nod: 1.09\ngóra: przesilenie czerwcowe', 1]] as const) {
+    const { L, top } = atTop(text);
+    const [y0] = dateOf(L.range.start);
+    let i = seasonDay(y0, which, 0) - L.range.start;
+    if (i < 0) i = seasonDay(y0 + 1, which, 0) - L.range.start;
+    const col = 1 + Math.floor((L.offset + i) / 7);
+    assert.ok(Math.abs(top - (col + 0.5) * L.step) < 1e-9, text);
+  }
+});
+
+test('a month at the top: the middle of its stretch is on top', () => {
   for (const [text, band, key] of [
-    ['rok: 2027\ngóra: zima', 'seasons', 3], // winter runs across the seam
-    ['rok: 2026\nod: 1.09\ngóra: lato', 'seasons', 1],
     ['year: 2027\ntop: march', 'months', 2],
     ['rok: 2027\nod: 15.03\ngóra: marzec', 'months', 2], // March in two pieces, joined across the seam
   ] as const) {
@@ -132,10 +144,10 @@ test('a season or a month at the top: the middle of its stretch is on top', () =
   }
 });
 
-test('bands: one stretch per season and month, covering the whole range', () => {
-  for (const text of ['rok: 2027', 'rok: 2026\nod: 1.09', 'rok: 2027\nod: wiosna', 'rok: 2027\nod: 15.03']) {
+test('bands: one stretch per month and sign, covering the whole range', () => {
+  for (const text of ['rok: 2027', 'rok: 2026\nod: 1.09', 'rok: 2027\nod: równonoc marcowa', 'rok: 2027\nod: 15.03']) {
     const { L } = atTop(text);
-    for (const [band, n] of [['seasons', 4], ['months', 12], ['zodiac', 12]] as const) {
+    for (const [band, n] of [['months', 12], ['zodiac', 12]] as const) {
       const segs = L.segments[band]!;
       assert.equal(segs.length, n, `${text}: ${band}`);
       const covered = segs.reduce((s, x) => s + x.to - x.from, 0);
@@ -253,14 +265,14 @@ test('the format line is added once, after leading comments', () => {
 
 test('every kind of year draws', () => {
   const days = ['pn', 'wt', 'śr', 'cz', 'pt', 'sb', 'nd'];
-  const starts = ['1.01', '1.09', '29.02', '15.03', 'wiosna', 'zima'];
-  const tops = ['łączenie', 'zima', 'lato', 'styczeń', 'sierpień', '1.06'];
+  const starts = ['1.01', '1.09', '29.02', '15.03', 'równonoc marcowa', 'przesilenie grudniowe'];
+  const tops = ['łączenie', 'przesilenie grudniowe', 'równonoc wrześniowa', 'styczeń', 'sierpień', '1.06'];
   for (const y of [MIN_YEAR, 1900, 2000, 2023, 2024, 2026, 2027, 2028, 2100, MAX_YEAR]) {
     for (let d = 0; d < 7; d++) {
       const start = starts[(y + d) % starts.length], top = tops[(y * 3 + d) % tops.length];
       const counters = d % 2 ? '\nlicznik: tygodnie od 1.01 Tydzień\nlicznik: miesiące od 15.05' : `\nlicznik: tygodnie od 1.07.${y} do 40\nlicznik: miesiące od 1.09 do 30.06 Szkoła`;
       const dirs = `\nkierunek: ${(y + d) % 2 ? 'zgodnie' : 'przeciwnie'}\ndni tygodnia: ${d % 3 ? 'od środka' : 'do środka'}`;
-      const text = `rok: ${y}\nod: ${start}\ngóra: ${top}\npierwszy dzień: ${days[d]}\npierścienie: pory roku, zodiak${counters}${dirs}`;
+      const text = `rok: ${y}\nod: ${start}\ngóra: ${top}\npierwszy dzień: ${days[d]}\npierścienie: zodiak${counters}${dirs}`;
       const cal = parseCalendar(text, 'pl', 2026);
       const svg = renderCalendar(cal, 'pl');
       assert.ok(svg.startsWith('<svg') && svg.endsWith('</svg>'), text);
@@ -272,8 +284,8 @@ test('every kind of year draws', () => {
 test('settings written as text read back the same, in either language', () => {
   const texts = [
     EXAMPLE.en, EXAMPLE.pl, '',
-    'rok: 2027\nod: wiosna\ngóra: lato\npierwszy dzień: śr\nkierunek: przeciwnie\ndni tygodnia: do środka\npierścienie: brak',
-    'year: 2028\ntop: january\nrings: counters, zodiac, seasons\ncounter: months from 31.01.2028 to 12\ncounter: weeks from 4.01.2027 week\ntimezone: -5:30',
+    'rok: 2027\nod: równonoc marcowa\ngóra: przesilenie czerwcowe\npierwszy dzień: śr\nkierunek: przeciwnie\ndni tygodnia: do środka\npierścienie: brak',
+    'year: 2028\ntop: january\nrings: counters, zodiac\ncounter: months from 31.01.2028 to 12\ncounter: weeks from 4.01.2027 week\ntimezone: -5:30',
     'rok: 2026\nod: 1.09.2027\ngóra: 15.03.2028\nkolory: weekend=#eee, linie=#123456\ntytuł: A.D. 2027\npodpis: jeden\npodpis: dwa',
     'rok: 2026\ntytuł: Rok\ntytuł: szkolny\nwnętrze: 4',
     'rok: 2026\nmiesiące: rzymskie\nzodiak: znaki\npierścienie: zodiak',
@@ -313,13 +325,13 @@ test('the centre: rows of text, no text; the size of the inside', () => {
   assert.equal(rows(''), 1);
   assert.equal(rows('tytuł: a\ntytuł: b\ntytuł: c'), 3);
   assert.equal(rows('tytuł: brak'), 0);
-    for (const text of ['wnętrze: 5\ntytuł: x\ntytuł: y', 'wnętrze: 1\npierścienie: pory roku, zodiak\nlicznik: tygodnie od 1.09 x\nlicznik: miesiące od 1.01 y']) {
+    for (const text of ['wnętrze: 5\ntytuł: x\ntytuł: y', 'wnętrze: 1\npierścienie: zodiak\nlicznik: tygodnie od 1.09 x\nlicznik: miesiące od 1.01 y']) {
     assert.ok(!renderCalendar(cal(text), 'pl').includes('NaN'), text);
   }
   // With the same inside, the months and the days stay in place whatever bands are chosen.
   const months = (text: string) => renderCalendar(cal(text), 'pl').match(/<circle [^>]*>/g)!.slice(-1)[0];
   const first = months('pierścienie: zodiak');
-  for (const text of ['', 'pierścienie: pory roku, zodiak', 'pierścienie: zodiak\nlicznik: tygodnie od 1.09 x\nlicznik: miesiące od 1.01 y']) {
+  for (const text of ['', 'pierścienie: zodiak', 'pierścienie: liczniki, zodiak\nlicznik: tygodnie od 1.09 x\nlicznik: miesiące od 1.01 y']) {
     assert.equal(months(text), first, text);
   }
 });

@@ -10,14 +10,14 @@ const sheets: [string, Lang, string][] = [
   ['rok-szkolny-2026-pl', 'pl', EXAMPLE.pl],
   ['rok-2027-pl', 'pl', `# Rok kalendarzowy z łączeniem na górze, wszystkie pierścienie i tygodnie roku od pierwszego poniedziałku.
 rok: 2027
-pierścienie: pory roku, zodiak
+pierścienie: zodiak
 strefa: +1
 licznik: tygodnie od 4.01.2027 tydzień roku
 `],
-  ['wiosna-2027-pl', 'pl', `# Od pierwszego dnia wiosny do ostatniego dnia zimy; lato na górze, weekend w środku tygodnia.
+  ['rownonoc-2027-pl', 'pl', `# Od równonocy marcowej do dnia przed następną; przesilenie czerwcowe na górze, weekend w środku tygodnia.
 rok: 2027
-od: wiosna
-góra: lato
+od: równonoc marcowa
+góra: przesilenie czerwcowe
 pierwszy dzień: śr
 strefa: +1
 licznik: tygodnie od 7.06.2027 do 12 kurs pływania

@@ -1,0 +1,8 @@
+# Od równonocy marcowej do dnia przed następną; przesilenie czerwcowe na górze, weekend w środku tygodnia.
+format: 1
+rok: 2027
+od: równonoc marcowa
+góra: przesilenie czerwcowe
+pierwszy dzień: śr
+strefa: +1
+licznik: tygodnie od 7.06.2027 do 12 kurs pływania
