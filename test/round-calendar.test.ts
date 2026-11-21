@@ -7,7 +7,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   parseCalendar, renderCalendar, calendarRange, layoutCalendar, counterSegments, counterStart, dateOf, epochDay, weekday,
-  withFormatLine, formatCalendar, bandSegments, MIN_YEAR, MAX_YEAR,
+  withFormatLine, formatCalendar, bandSegments, easter, groupDays, holidayGroup, holidaySets, parseGroupLines,
+  MIN_YEAR, MAX_YEAR,
 } from '../src/round-calendar.ts';
 import { EXAMPLE } from '../src/examples.ts';
 
@@ -34,9 +35,12 @@ test('both examples read without issues and mean the same', () => {
   const en = parseCalendar(EXAMPLE.en, 'en', 2026), pl = parseCalendar(EXAMPLE.pl, 'pl', 2026);
   assert.deepEqual(en.issues, []);
   assert.deepEqual(pl.issues, []);
-  // The same apart from the counter's name, which is the reader's own text.
-  const unnamed = (c: typeof en) => ({ ...c, counters: c.counters.map((x) => ({ ...x, name: '' })) });
+  // The same apart from the counter's name, which is the reader's own text, and the groups: the
+  // Polish one has the holidays in Poland as well.
+  const unnamed = (c: typeof en) => ({ ...c, counters: c.counters.map((x) => ({ ...x, name: '' })), groups: [] });
   assert.deepEqual(unnamed(en), unnamed(pl));
+  assert.deepEqual(en.groups.map((g) => g.days.length), [3]);
+  assert.deepEqual(pl.groups.map((g) => g.days.length), [14, 2]);
 });
 
 test('the range: a calendar year by default, otherwise a year from the start of a month', () => {
@@ -306,4 +310,79 @@ test('names of the months and of the zodiac', () => {
   assert.deepEqual(labels('miesiące: rzymskie', 'months').slice(0, 4), ['I', 'II', 'III', 'IV']);
   assert.ok(labels('zodiak: znaki', 'zodiac').every((s) => /^[\u2648-\u2653]\uFE0E$/.test(s)));
   assert.ok(renderCalendar(cal('zodiak: znaki\npierścienie: zodiak'), 'pl').includes('♑\uFE0E'));
+});
+
+test('Easter Sunday', () => {
+  assert.deepEqual(easter(2024), [3, 31]);
+  assert.deepEqual(easter(2026), [4, 5]);
+  assert.deepEqual(easter(2027), [3, 28]);
+  assert.deepEqual(easter(2038), [4, 25]); // the latest it can be
+  assert.deepEqual(easter(2285), [3, 22]); // the earliest
+});
+
+test('groups of days', () => {
+  const text = 'rok: 2027\n[Urodziny]\nkolor: #CFE8CF\n14.03 Ala\n# bez nazwy:\n2.07\nwielkanoc-2 Wielki Piątek\n31.02 Zła\n[]\n1.01.2028\n';
+  const cal = parseCalendar(text, 'pl', 2026);
+  assert.deepEqual(cal.issues.map((i) => i.line), [8]);
+  assert.equal(cal.groups.length, 2);
+  const [g, h] = cal.groups;
+  assert.equal(g.name, 'Urodziny');
+  assert.equal(g.color, '#cfe8cf');
+  assert.equal(g.days.length, 3);
+  assert.deepEqual(g.lines, ['14.03 Ala', '# bez nazwy:', '2.07', 'wielkanoc-2 Wielki Piątek', '31.02 Zła']);
+  assert.equal(h.name, '');
+  // In the range, in its order; a date with a year only in its year.
+  const r = calendarRange(cal);
+  assert.deepEqual(groupDays(g, r).map((x) => [iso(r.start + x.day), x.label]),
+    [['2027-03-14', 'Ala'], ['2027-03-26', 'Wielki Piątek'], ['2027-07-02', '']]);
+  assert.equal(groupDays(h, r).length, 0);
+  // Saved with their comments, and read back the same.
+  const out = formatCalendar(cal, 'pl');
+  assert.ok(out.includes('[Urodziny]\nkolor: #cfe8cf\n14.03 Ala\n# bez nazwy:'));
+  assert.equal(formatCalendar(parseCalendar(out, 'pl', 2026), 'pl'), out);
+  assert.equal(formatCalendar(parseCalendar(formatCalendar(cal, 'en'), 'en', 2026), 'pl'), out);
+  // A day outside a group, a colour outside one or not a colour.
+  assert.deepEqual(parseCalendar('14.03 Ala', 'pl', 2026).issues.map((i) => i.line), [1]);
+  assert.deepEqual(parseCalendar('kolor: #fff\n[A]\nkolor: zielony', 'pl', 2026).issues.map((i) => i.line), [1, 3]);
+  // Other settings under a group still count for the calendar.
+  assert.equal(parseCalendar('[A]\nrok: 2030', 'pl', 2026).year, 2030);
+});
+
+test('the lines of one group', () => {
+  const { days, lines, issues } = parseGroupLines('1.11 Wszystkich Świętych\n\n# uwaga\nwielkanoc+1\nAla\n30.02', 'pl');
+  assert.equal(days.length, 2);
+  assert.equal(lines.length, 5);
+  assert.deepEqual(issues.map((i) => i.line), [5, 6]);
+});
+
+test('holidays in Poland', () => {
+  assert.deepEqual(holidaySets('pl'), [{ id: 'pl', country: 'Polska' }]);
+  for (const lang of ['pl', 'en'] as const) {
+    const g = holidayGroup('pl', lang)!;
+    assert.equal(g.days.length, 14);
+    const cal = parseCalendar('rok: 2026', lang, 2026);
+    const r = calendarRange(cal);
+    const days = groupDays(g, r).map((x) => iso(r.start + x.day).slice(5));
+    assert.deepEqual(days, ['01-01', '01-06', '04-05', '04-06', '05-01', '05-03', '05-24', '06-04', '08-15', '11-01',
+      '11-11', '12-24', '12-25', '12-26']);
+  }
+  assert.equal(holidayGroup('xx', 'pl'), undefined);
+});
+
+test('days on the sheet and the list under the disc', () => {
+  const svg = (text: string) => renderCalendar(parseCalendar(text, 'pl', 2026), 'pl');
+  const plain = svg('rok: 2027');
+  assert.ok(!plain.includes('class="days"'));
+  const g = holidayGroup('pl', 'pl')!;
+  const withList = svg(`rok: 2027\n[${g.name}]\n${g.lines.join('\n')}\n[Urodziny]\nkolor: #cfe8cf\n14.03 Ala\n2.07`);
+  assert.ok(withList.includes('fill="#cfe8cf"'));
+  assert.ok(withList.includes('>Boże Ciało<') && withList.includes('>27 maj<'));
+  assert.ok(withList.includes('>Ala<') && withList.includes('>Urodziny<'));
+  // Days without names are shaded, not listed: no list at all.
+  assert.ok(!svg('[A]\n2.07').includes('class="days"'));
+  // A short list leaves the disc in the middle; a long one lifts it.
+  const centre = (s: string) => Number(s.match(/<g class="centre"><text x="[\d.]+" y="([\d.]+)"/)![1]);
+  const many = Array.from({ length: 60 }, (_, i) => `${(i % 28) + 1}.${(i % 12) + 1} Dzień ${i}`).join('\n');
+  assert.ok(Math.abs(centre(svg('[A]\n1.05 Jeden')) - centre(plain)) < 0.01);
+  assert.ok(centre(svg(`[A]\n${many}`)) < centre(plain) - 50);
 });

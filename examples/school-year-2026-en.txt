@@ -10,3 +10,9 @@ direction: clockwise  # or anticlockwise
 weekdays: outwards  # or inwards: the week runs from the rim to the centre
 rings: counters     # bands between the year and the months: zodiac, counters
 counter: weeks from 1.09 to 25.06 school weeks   # numbered from 1; ends on a day or a number (to 40); the name is optional
+
+[Birthdays]         # a group of days, shaded in one colour; those with names are listed under the disc
+colour: #cfe8cf
+14.03 Ann
+2.07 Tom
+easter-2            # a day counted from Easter Sunday; without a name it is only shaded

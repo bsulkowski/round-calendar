@@ -1,7 +1,7 @@
 {
   "name": "round-calendar",
-  "version": "1.0.0",
-  "description": "A whole year on one A4 sheet, drawn as a disc: weeks around the edge, weekdays as rings, seasons and months inside. Starts on any day and turns to put any part at the top.",
+  "version": "1.1.0",
+  "description": "A whole year on one A4 sheet, drawn as a disc: weeks around the edge, weekdays as rings, months, the zodiac and counters inside, holidays and days of your own shaded and named under it.",
   "license": "MIT",
   "author": "Bartosz Sułkowski (https://bsulkowski.pl)",
   "homepage": "https://github.com/bsulkowski/round-calendar",

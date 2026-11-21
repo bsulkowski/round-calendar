@@ -12,7 +12,8 @@ Weeks go round the edge like the hours on a clock, and each weekday is a ring, s
 Mondays lie on one circle and the weekends make a band. The rings have equal areas: the outer
 ones are thinner but longer. In the middle is the year, and round it the months, right inside
 the days. Between them can go a band for the zodiac and counters — weeks of a school year,
-months since a day — as thin bands of their own.
+months since a day — as thin bands of their own. Holidays and days of your own are shaded,
+group by group, and those with names are listed under the disc.
 
 The year starts with a month — January, or September for a school year — and runs for twelve
 months. Where its end meets its start there is a seam: one column with the weekday names. At the
@@ -45,7 +46,36 @@ be written in English or in Polish — only the names on the sheet follow the la
 
 Polish keywords: `rok`, `od`, `góra`, `pierwszy dzień`, `kierunek` (`zgodnie z zegarem`, `przeciwnie do zegara`),
 `dni tygodnia` (`od środka`, `do środka`), `miesiące` (`pełne`, `skrócone`, `rzymskie`), `zodiak` (`pełne`, `znaki`), `pierścienie`, `licznik`, `kolory`, `tytuł`, `wnętrze`, `podpis`;
-units `tygodnie`, `miesiące`; `do` for `to`.
+units `tygodnie`, `miesiące`; `do` for `to`; in groups `kolor` for `colour`, `wielkanoc` for `easter`.
+
+### Days of your own
+
+Days to shade — holidays, birthdays, a term's last day — come in groups. A line in brackets opens
+a group and names it; the lines under it are its days, each a date and, if you like, a name:
+
+```
+[Birthdays]
+colour: #cfe8cf
+14.03 Ann
+2.07          # Grandpa — no name on the sheet
+1.10.2027 Wedding
+easter+1 Easter Monday
+```
+
+| Line | What it does |
+|---|---|
+| `[Holidays]` | Opens a group. The name heads the group in the list under the disc; `[]` leaves it out. |
+| `colour: #cfe8cf` | The colour the group's days are shaded in, by default that of the weekend. A later group's colour covers an earlier one's. |
+| `14.03 Ann` | A day every year. |
+| `1.10.2027 Wedding` | A day once, in that year (also `2027-10-01`). |
+| `easter+60 Corpus Christi` | A day counted from Easter Sunday: `easter`, `easter+1`, `easter-2`. |
+
+A day with a name goes on the list under the disc, by date; a day without one is only shaded,
+and a comment after `#` can say what it is. The disc stays in the middle while the list fits
+under it; a longer list moves it up.
+
+Holidays of a country come as a ready-made group to add and edit like any other — for now
+Poland (`holidayGroup('pl', lang)`): the days off work, with Christmas Eve, which became one in 2025.
 
 The week runs along the radius and on into the next column, so its order on the radius is always
 the seven days in sequence; `first day` chooses where the sequence starts, `weekdays` which way it runs.
@@ -64,6 +94,8 @@ Ready-made settings and the sheets drawn from them are in [`examples/`](examples
 
 - **Weekdays and leap years** for any Gregorian year (1583–2998).
 - **Zodiac signs** use the fixed dates printed in calendars.
+- **Easter Sunday** for any Gregorian year (the anonymous algorithm, Meeus ch. 8), and the days
+  counted from it.
 
 ## Using the code
 
@@ -79,6 +111,8 @@ calendarRange(cal);                     // { start, days }: the first day (days 
 const svg = renderCalendar(cal, 'en');  // <svg …> 210 × 297 mm
 formatCalendar(cal, 'en');              // the settings as text again: the year, then what differs from the defaults
 withFormatLine(text);                   // the text with a `format: 1` line, as saved to a file
+holidayGroup('pl', 'en');               // holidays in Poland as a group: { name, days, lines }
+parseGroupLines(text, 'en');            // the days of one group from its lines alone, with issues
 ```
 
 `parseCalendar` never throws: lines it cannot read are listed in `cal.issues` with their line
@@ -101,7 +135,7 @@ release — a new option → 1.1, a fix in the drawing → 1.0.1.
 ## Tests
 
 ```sh
-npm test            # the settings, the range, the top and counters, every year draws
+npm test            # the settings, the range, the top, counters and groups, Easter, every year draws
 npm run examples    # redraw examples/
 ```
 
@@ -110,7 +144,7 @@ npm run examples    # redraw examples/
 The repository began in 2018 as a Groovy script that drew a single year with everything typed
 in by hand. The layout — equal-area rings, stepped month borders, colours — comes from there;
 it is in the git history, as is a later version with Polish holidays and your own dates marked
-on the disc.
+on the disc, which came back in 1.1 as groups.
 
 ## Licence
 

@@ -12,7 +12,8 @@ Tygodnie idą po obwodzie jak godziny na tarczy zegara, a każdy dzień tygodnia
 wszystkie poniedziałki leżą na jednym okręgu, a weekendy tworzą pas. Pierścienie mają równe
 pola — zewnętrzne są cieńsze, ale dłuższe. Pośrodku jest rok, a wokół niego, tuż wewnątrz dni,
 miesiące. Między nimi może stać pas zodiaku oraz liczniki — tygodnie roku szkolnego, miesiące
-od danego dnia — jako własne cienkie pasy.
+od danego dnia — jako własne cienkie pasy. Święta i własne dni są cieniowane grupami, a te
+z nazwami wypisane pod tarczą.
 
 Rok zaczyna się od miesiąca — stycznia albo, dla roku szkolnego, września — i trwa dwanaście
 miesięcy. Tam, gdzie jego koniec spotyka się z początkiem, jest łączenie: jedna kolumna z nazwami
@@ -46,7 +47,36 @@ na kartce.
 
 Angielskie słowa kluczowe: `year`, `from`, `top`, `first day`, `direction` (`clockwise`, `anticlockwise`),
 `weekdays` (`outwards`, `inwards`), `months` (`full`, `short`, `roman`), `zodiac` (`full`, `signs`), `rings`, `counter`, `colors`, `title`, `inside`, `signature`;
-jednostki `weeks`, `months`; `to` albo `until` zamiast `do`.
+jednostki `weeks`, `months`; `to` albo `until` zamiast `do`; w grupach `colour` albo `color` zamiast `kolor`, `easter` zamiast `wielkanoc`.
+
+### Własne dni
+
+Dni do zacieniowania — święta, urodziny, koniec semestru — są zebrane w grupy. Linia w nawiasie
+otwiera grupę i ją nazywa; linie pod nią to jej dni, każdy z datą i, jeśli trzeba, nazwą:
+
+```
+[Urodziny]
+kolor: #cfe8cf
+14.03 Ala
+2.07          # dziadek — bez nazwy na kartce
+1.10.2027 Ślub
+wielkanoc+1 Poniedziałek Wielkanocny
+```
+
+| Linia | Co robi |
+|---|---|
+| `[Święta]` | Otwiera grupę. Nazwa jest nagłówkiem grupy na liście pod tarczą; `[]` ją pomija. |
+| `kolor: #cfe8cf` | Kolor, którym cieniowane są dni grupy, domyślnie kolor weekendu. Kolor późniejszej grupy przykrywa kolor wcześniejszej. |
+| `14.03 Ala` | Dzień co roku. |
+| `1.10.2027 Ślub` | Dzień raz, w tym roku (także `2027-10-01`). |
+| `wielkanoc+60 Boże Ciało` | Dzień liczony od Niedzieli Wielkanocnej: `wielkanoc`, `wielkanoc+1`, `wielkanoc-2`. |
+
+Dzień z nazwą trafia na listę pod tarczą, w kolejności dat; dzień bez nazwy jest tylko
+zacieniowany, a co to za dzień, może powiedzieć komentarz po `#`. Tarcza stoi pośrodku, dopóki
+lista mieści się pod nią; dłuższa lista przesuwa ją w górę.
+
+Święta danego kraju są gotową grupą, którą się dodaje i poprawia jak każdą inną — na razie
+Polska (`holidayGroup('pl', lang)`): dni wolne od pracy, z Wigilią, która jest nim od 2025 roku.
 
 Tydzień biegnie wzdłuż promienia i dalej do następnej kolumny, więc jego kolejność na promieniu
 to zawsze siedem dni po kolei; `pierwszy dzień` wybiera, od którego się zaczyna, `dni tygodnia` —
@@ -66,6 +96,8 @@ Gotowe ustawienia i narysowane z nich arkusze są w [`examples/`](examples).
 
 - **Dni tygodnia i lata przestępne** dla dowolnego roku kalendarza gregoriańskiego (1583–2998).
 - **Znaki zodiaku** mają stałe daty, jak w drukowanych kalendarzach.
+- **Niedziela Wielkanocna** dla dowolnego roku kalendarza gregoriańskiego (algorytm anonimowy,
+  Meeus rozdz. 8) i dni od niej liczone.
 
 ## Użycie kodu
 
@@ -81,6 +113,8 @@ calendarRange(cal);                     // { start, days }: pierwszy dzień (dni
 const svg = renderCalendar(cal, 'pl');  // <svg …> 210 × 297 mm
 formatCalendar(cal, 'pl');              // ustawienia znów jako tekst: rok, potem to, co różni się od domyślnych
 withFormatLine(text);                   // tekst z linią `format: 1`, tak jak przy zapisie do pliku
+holidayGroup('pl', 'pl');               // święta w Polsce jako grupa: { name, days, lines }
+parseGroupLines(text, 'pl');            // dni jednej grupy z samych jej linii, z błędami
 ```
 
 `parseCalendar` nie rzuca wyjątków: linie, których nie umie przeczytać, trafiają do `cal.issues`
@@ -103,7 +137,7 @@ z każdym wydaniem — nowa opcja → 1.1, poprawka rysunku → 1.0.1.
 ## Testy
 
 ```sh
-npm test            # ustawienia, zakres, góra i liczniki, rysowanie każdego roku
+npm test            # ustawienia, zakres, góra, liczniki i grupy, Wielkanoc, rysowanie każdego roku
 npm run examples    # przerysowanie examples/
 ```
 
@@ -112,7 +146,7 @@ npm run examples    # przerysowanie examples/
 Repozytorium powstało w 2018 roku jako skrypt w Groovym, który rysował jeden rok z wszystkim
 wpisanym ręcznie. Stamtąd pochodzi układ — pierścienie o równych polach, schodkowe granice
 miesięcy, kolory; stary kod jest w historii gita, tak jak późniejsza wersja z zaznaczonymi
-na kole polskimi świętami i własnymi datami.
+na kole polskimi świętami i własnymi datami, które wróciły w 1.1 jako grupy.
 
 ## Licencja
 

@@ -10,3 +10,24 @@ kierunek: zgodnie z zegarem  # albo przeciwnie do zegara
 dni tygodnia: od środka      # albo do środka: tydzień biegnie od krawędzi do środka
 pierścienie: liczniki        # pasy między rokiem a miesiącami: zodiak, liczniki
 licznik: tygodnie od 1.09 do 25.06 tygodnie szkolne   # numery od 1; koniec to dzień albo liczba (do 40); nazwa nie jest konieczna
+
+[Święta]            # grupa dni cieniowanych jednym kolorem; te z nazwami są wypisane pod tarczą
+1.01 Nowy Rok
+6.01 Trzech Króli
+wielkanoc Wielkanoc # dzień liczony od Niedzieli Wielkanocnej
+wielkanoc+1 Poniedziałek Wielkanocny
+1.05 Święto Pracy
+3.05 Święto Konstytucji 3 Maja
+wielkanoc+49 Zielone Świątki
+wielkanoc+60 Boże Ciało
+15.08 Wniebowzięcie NMP
+1.11 Wszystkich Świętych
+11.11 Święto Niepodległości
+24.12 Wigilia
+25.12 Boże Narodzenie
+26.12 Drugi dzień Bożego Narodzenia
+
+[Urodziny]
+kolor: #cfe8cf
+14.03 Ala
+2.07 Tomek
