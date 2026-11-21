@@ -2,5 +2,4 @@
 format: 1
 rok: 2027
 pierścienie: zodiak
-strefa: +1
 licznik: tygodnie od 4.01.2027 tydzień roku

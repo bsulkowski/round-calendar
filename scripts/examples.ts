@@ -11,23 +11,21 @@ const sheets: [string, Lang, string][] = [
   ['rok-2027-pl', 'pl', `# Rok kalendarzowy z łączeniem na górze, wszystkie pierścienie i tygodnie roku od pierwszego poniedziałku.
 rok: 2027
 pierścienie: zodiak
-strefa: +1
 licznik: tygodnie od 4.01.2027 tydzień roku
 `],
-  ['rownonoc-2027-pl', 'pl', `# Od równonocy marcowej do dnia przed następną; przesilenie czerwcowe na górze, weekend w środku tygodnia.
+  ['od-marca-2027-pl', 'pl', `# Od 20 marca, 21 czerwca na górze, weekend w środku tygodnia.
 rok: 2027
-od: równonoc marcowa
-góra: przesilenie czerwcowe
+od: 20.03
+góra: 21.06
 pierwszy dzień: śr
-strefa: +1
 licznik: tygodnie od 7.06.2027 do 12 kurs pływania
 `],
-  ['sunday-first-2028-en', 'en', `# Weeks from Sunday, anticlockwise and inwards, a leap year, January at the top, a larger inside, two rows in the centre.
+  ['sunday-first-2028-en', 'en', `# Weeks from Sunday, anticlockwise and inwards, a leap year, mid-January at the top, a larger inside, two rows in the centre.
 year: 2028
 first day: sun
 direction: anticlockwise
 weekdays: inwards
-top: january
+top: 15.01
 title: A.D.
 title: 2028
 inside: 4

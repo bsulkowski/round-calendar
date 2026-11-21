@@ -1,0 +1,7 @@
+# Od 20 marca, 21 czerwca na górze, weekend w środku tygodnia.
+format: 1
+rok: 2027
+od: 20.03
+góra: 21.06
+pierwszy dzień: śr
+licznik: tygodnie od 7.06.2027 do 12 kurs pływania

@@ -4,7 +4,7 @@
 
 A whole year on one A4 sheet, drawn as a disc.
 
-![A school year 2026/27 with the December solstice at the top](examples/school-year-2026-en.svg)
+![A school year 2026/27 with New Year at the top](examples/school-year-2026-en.svg)
 
 ## The idea
 
@@ -14,10 +14,9 @@ ones are thinner but longer. In the middle is the year, and round it the months,
 the days. Between them can go a band for the zodiac and counters — weeks of a school year,
 months since a day — as thin bands of their own.
 
-The year can start on any day — on 1 January, at the start of a school year, on the day of an
-equinox or solstice — and runs for a year from there. Where its end meets its start there is a
-seam: one column with the weekday names. The disc can be turned so that the seam, an equinox or
-solstice, a month or a chosen day is at the top. By default time runs clockwise and each week from the centre
+The year can start on any day — on 1 January, at the start of a school year — and runs for a
+year from there. Where its end meets its start there is a seam: one column with the weekday names.
+The seam is at the top, or the week of a chosen day. By default time runs clockwise and each week from the centre
 outwards; either direction can be turned.
 
 ## Settings
@@ -30,8 +29,7 @@ be written in English or in Polish — only the names on the sheet follow the la
 |---|---|
 | `year: 2026` | The year in which the calendar starts. Without it, the current year. |
 | `from: 1.09` | The first day. The calendar runs to the day before the same date a year later. A full date (`1.09.2026`, `2026-09-01`) also sets the year. By default 1 January. |
-| `from: March equinox` | The day of an equinox or solstice (`March equinox`, `June solstice`, `September equinox`, `December solstice`). The calendar runs to the day before it comes again. They are named by months, not seasons: which season one begins depends on the hemisphere. |
-| `top: seam` | What is at the top of the disc: the seam (the default), the week of an equinox or solstice (`December solstice`), the middle of a month (`january`), or the week of a day (`1.09`). |
+| `top: 1.01` | The day whose week is at the top of the disc. Without it, the seam. |
 | `first day: sun` | The weekday the week starts with on the radius: on the innermost ring, or with `weekdays: inwards` the outermost. Monday by default. `wed` puts the weekend in the middle. |
 | `direction: anticlockwise` | Which way the weeks go round: `clockwise` (the default) or `anticlockwise`. |
 | `weekdays: inwards` | Which way a week runs along the radius: `outwards`, from the centre (the default), or `inwards`, from the rim. |
@@ -39,7 +37,6 @@ be written in English or in Polish — only the names on the sheet follow the la
 | `zodiac: signs` | How the zodiac is named: `full` (the default) or `signs` (♈ ♉ …). |
 | `rings: zodiac, counters` | The bands between the year in the middle and the months, which are always there, from the centre outwards. `counters` sets where the counters go (else last, just inside the months). By default none. |
 | `counter: weeks from 1.09 to 25.06 school weeks` | A band with weeks or months numbered from a day: 1, 2, 3…, each number over the days it holds, changing on exact days. A day without a year repeats: the count starts again from 1 each year. With a year (`from 2027-05-03`) it runs on and shows nothing before that day. `to` ends it on a day, the last one counted (`to 25.06`), or after a number (`to 40`); without it the count runs to the next start or the end of the calendar. Weeks of the calendar year start on its first Monday (`from 4.01.2027`). The name is optional; it stands just before the counter's start (number 1) — before the seam if it starts with the calendar or earlier — in place of the numbers it covers. Several `counter` lines give several bands. |
-| `timezone: +1` | The time zone for the dates of equinoxes and solstices. UTC by default. |
 | `colors: weekend=#eaeaea, lines=#c0c0c0` | Colours of the weekend cells and of the lines. |
 | `title: A.D. 2027` | The text in the middle of the disc instead of the year (or of `2026/2027` for a year that crosses New Year). Several `title` lines give several rows; `title: none` leaves the middle empty. The text is sized to fit. |
 | `inside: 4` | The size of everything inside the months — the year and the bands — counted in months bands: from `1` to `5`, `3` by default; another number reads as the nearest of these. The year takes as much as one months band, and so does the zodiac by default; the bands share the inside, so the months and the days stay in place when bands are added or removed. `1` is a quarter of the radius, `5` a half. |
@@ -47,7 +44,7 @@ be written in English or in Polish — only the names on the sheet follow the la
 | `format: 1` | The version of the file format. Saving a file adds it; a file without it is format 1. |
 
 Polish keywords: `rok`, `od`, `góra`, `pierwszy dzień`, `kierunek` (`zgodnie z zegarem`, `przeciwnie do zegara`),
-`dni tygodnia` (`od środka`, `do środka`), `miesiące` (`pełne`, `skrócone`, `rzymskie`), `zodiak` (`pełne`, `znaki`), `pierścienie`, `licznik`, `strefa`, `kolory`, `tytuł`, `wnętrze`, `podpis`;
+`dni tygodnia` (`od środka`, `do środka`), `miesiące` (`pełne`, `skrócone`, `rzymskie`), `zodiak` (`pełne`, `znaki`), `pierścienie`, `licznik`, `kolory`, `tytuł`, `wnętrze`, `podpis`;
 units `tygodnie`, `miesiące`; `do` for `to`.
 
 The week runs along the radius and on into the next column, so its order on the radius is always
@@ -65,9 +62,7 @@ Ready-made settings and the sheets drawn from them are in [`examples/`](examples
 
 ## What is computed
 
-- **Equinoxes and solstices** by Meeus, *Astronomical Algorithms*, ch. 27 — within about a minute,
-  for years 1583–2998. The date is taken in the time zone from `timezone:`.
-- **Weekdays and leap years** for any Gregorian year.
+- **Weekdays and leap years** for any Gregorian year (1583–2998).
 - **Zodiac signs** use the fixed dates printed in calendars.
 
 ## Using the code
@@ -106,7 +101,7 @@ release — a new option → 1.1, a fix in the drawing → 1.0.1.
 ## Tests
 
 ```sh
-npm test            # equinoxes against published times, the settings, the range, the top and counters, every year draws
+npm test            # the settings, the range, the top and counters, every year draws
 npm run examples    # redraw examples/
 ```
 

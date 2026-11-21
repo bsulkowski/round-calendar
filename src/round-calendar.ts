@@ -1,13 +1,12 @@
 // Round calendar: a whole year on one disc. Weeks go round the edge, the seven weekdays are
 // rings, and the months, the zodiac and counters sit inside as bands. The year can start on any
-// day, an equinox or a solstice among them, and the disc can be turned so that any part of it
-// is at the top.
+// day, and the disc can be turned so that any week is at the top.
 //
 // Pure functions with no DOM access: the same code draws the sheet in the browser,
 // at build time and in Node.
 //
 // Descends from an older generator in this repository (Groovy, 2018), which had the year
-// and the equinoxes typed in by hand. Here they are computed for any year.
+// typed in by hand.
 
 export type Lang = 'en' | 'pl';
 
@@ -18,7 +17,7 @@ export const TOOL_VERSION = '1.0';
 export const FORMAT_VERSION = 1;
 
 export const MIN_YEAR = 1583; // first full year of the Gregorian calendar
-export const MAX_YEAR = 2998; // the equinox formulas below hold up to 3000; a year may run into the next
+export const MAX_YEAR = 2998; // a sanity limit; a calendar may run into the next year
 
 /* ---------- dates ---------- */
 
@@ -44,46 +43,8 @@ export function dateOf(e: number): [number, number, number] {
 /** Weekday of an epoch day: 0 = Monday … 6 = Sunday. */
 export const weekday = (e: number) => (new Date(e * 86400000).getUTCDay() + 6) % 7;
 
-// Equinoxes and solstices: Meeus, Astronomical Algorithms, ch. 27 (years 1000–3000).
-// Accurate to about a minute, which only matters when the moment falls close to midnight.
-const SEASON_JDE0 = [
-  [2451623.80984, 365242.37404, 0.05169, -0.00411, -0.00057],
-  [2451716.56767, 365241.62603, 0.00325, 0.00888, -0.0003],
-  [2451810.21715, 365242.01767, -0.11575, 0.00337, 0.00078],
-  [2451900.05952, 365242.74049, -0.06223, -0.00823, 0.00032],
-];
-const SEASON_TERMS = [
-  [485, 324.96, 1934.136], [203, 337.23, 32964.467], [199, 342.08, 20.186], [182, 27.85, 445267.112],
-  [156, 73.14, 45036.886], [136, 171.52, 22518.443], [77, 222.54, 65928.934], [74, 296.72, 3034.906],
-  [70, 243.58, 9037.513], [58, 119.81, 33718.147], [52, 297.17, 150.678], [50, 21.02, 2281.226],
-  [45, 247.54, 29929.562], [44, 325.15, 31555.956], [29, 60.93, 4443.417], [18, 155.12, 67555.328],
-  [17, 288.79, 4562.452], [16, 198.04, 62894.029], [14, 199.76, 31436.921], [12, 95.39, 14577.848],
-  [12, 287.11, 31931.756], [12, 320.81, 34777.259], [9, 227.73, 1222.114], [8, 15.45, 16859.074],
-];
 const rad = (deg: number) => (deg * Math.PI) / 180;
 
-/**
- * Moment of an equinox or solstice as a UTC timestamp (ms).
- * which: 0 = March equinox, 1 = June solstice, 2 = September equinox, 3 = December solstice —
- * the starts of spring, summer, autumn and winter.
- */
-export function seasonMoment(y: number, which: number): number {
-  const Y = (y - 2000) / 1000;
-  const c = SEASON_JDE0[which];
-  const jde0 = c[0] + c[1] * Y + c[2] * Y ** 2 + c[3] * Y ** 3 + c[4] * Y ** 4;
-  const T = (jde0 - 2451545.0) / 36525;
-  const W = rad(35999.373 * T - 2.47);
-  const dl = 1 + 0.0334 * Math.cos(W) + 0.0007 * Math.cos(2 * W);
-  const S = SEASON_TERMS.reduce((s, [A, B, C]) => s + A * Math.cos(rad(B + C * T)), 0);
-  const jde = jde0 + (0.00001 * S) / dl;
-  // Terrestrial time runs about a minute ahead of UTC today; close enough for a date.
-  return (jde - 2440587.5) * 86400000 - 69000;
-}
-
-/** Epoch day of an equinox or solstice (0 March, 1 June, 2 September, 3 December), in a time
- * zone given in minutes east of UTC. */
-export const seasonDay = (y: number, which: number, tz: number) =>
-  Math.floor((seasonMoment(y, which) + tz * 60000) / 86400000);
 
 /* ---------- names ---------- */
 
@@ -94,12 +55,6 @@ const MONTHS: Record<Lang, string[]> = {
 const WEEKDAYS: Record<Lang, string[]> = {
   en: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
   pl: ['pn', 'wt', 'śr', 'cz', 'pt', 'sb', 'nd'],
-};
-// Equinoxes and solstices are named by their months, not by seasons: which season one of them
-// begins depends on the hemisphere.
-const POINTS: Record<Lang, string[]> = {
-  en: ['March equinox', 'June solstice', 'September equinox', 'December solstice'],
-  pl: ['równonoc marcowa', 'przesilenie czerwcowe', 'równonoc wrześniowa', 'przesilenie grudniowe'],
 };
 const ZODIAC: Record<Lang, string[]> = {
   en: ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'],
@@ -135,17 +90,12 @@ export interface Counter { unit: Unit; from: DayDate; until?: Until; name: strin
 /** A day of the year without its year (14.03), or with one (14.03.2027). */
 export interface DayDate { m: number; d: number; y?: number }
 
-/** Where the calendar starts: a date, or an equinox or solstice (`which` as in seasonDay). */
-export type Start = ({ kind: 'date' } & DayDate) | { kind: 'point'; which: number };
+/** Where the calendar starts: a day. */
+export type Start = { kind: 'date' } & DayDate;
 
-/** What is at the top of the disc: the seam between the end and the start of the year (the column
- * with the weekday names), the week of an equinox or solstice, the middle of a month, or the week
- * of a day. */
-export type Top =
-  | { kind: 'seam' }
-  | { kind: 'point'; which: number }
-  | { kind: 'month'; m: number }
-  | ({ kind: 'date' } & DayDate);
+/** What is at the top of the disc: the week of a day, or else the seam between the end and the
+ * start of the year (the column with the weekday names). */
+export type Top = { kind: 'seam' } | ({ kind: 'date' } & DayDate);
 
 export interface Issue { line: number; message: string }
 
@@ -161,7 +111,6 @@ export interface Calendar {
   zodiacNames: ZodiacNames; // how the zodiac signs are named in theirs
   rings: Ring[]; // from the centre outwards, between the year and the months
   counters: Counter[]; // each its own thin band, where 'counters' stands in the rings
-  tz: number; // minutes east of UTC, for the dates of equinoxes and solstices
   colors: Record<string, string>; // 'weekend', 'lines'
   title: string[] | null; // lines of text in the centre; [] = the year, null = no text
   inside: number; // area of everything inside the months band, in months bands
@@ -180,7 +129,6 @@ const KEYS: Record<string, string> = {
   miesiące: 'monthNames', miesiace: 'monthNames', months: 'monthNames',
   zodiak: 'zodiacNames', zodiac: 'zodiacNames',
   pierścienie: 'rings', pierscienie: 'rings', rings: 'rings',
-  strefa: 'tz', 'strefa czasowa': 'tz', timezone: 'tz', 'time zone': 'tz',
   kolory: 'colors', colors: 'colors', colours: 'colors',
   tytuł: 'title', tytul: 'title', title: 'title',
   wnętrze: 'inside', wnetrze: 'inside', inside: 'inside',
@@ -200,20 +148,6 @@ const DAY_ALIAS = aliases([
   'śr sr śro sro środa sroda wed wednesday', 'cz czw czwartek thu thur thurs thursday',
   'pt pią pia piątek piatek fri friday', 'sb sob sobota sat saturday', 'nd nie ndz niedziela sun sunday',
 ]);
-const POINT_ALIAS: Record<string, number> = {};
-[
-  ['równonoc marcowa', 'rownonoc marcowa', 'march equinox'],
-  ['przesilenie czerwcowe', 'june solstice'],
-  ['równonoc wrześniowa', 'rownonoc wrzesniowa', 'september equinox'],
-  ['przesilenie grudniowe', 'december solstice'],
-].forEach((names, i) => names.forEach((n) => { POINT_ALIAS[n] = i; }));
-const MONTH_ALIAS = aliases([
-  'styczeń styczen sty january jan', 'luty lut february feb', 'marzec mar march',
-  'kwiecień kwiecien kwi april apr', 'maj may', 'czerwiec cze june jun', 'lipiec lip july jul',
-  'sierpień sierpien sie august aug', 'wrzesień wrzesien wrz september sep sept',
-  'październik pazdziernik paź paz october oct', 'listopad lis november nov', 'grudzień grudzien gru december dec',
-]);
-const SEAM = new Set(['łączenie', 'laczenie', 'szew', 'seam', 'join']);
 
 const RING_ALIAS: Record<string, Ring> = {
   zodiak: 'zodiac', zodiac: 'zodiac',
@@ -270,8 +204,8 @@ const MSG: Record<Lang, Record<string, string>> = {
     key: 'unknown setting “{0}”',
     line: 'a line should be a setting: name, colon, value (year: 2027)',
     year: 'write a year between ' + MIN_YEAR + ' and ' + MAX_YEAR,
-    start: 'write a date (1.09, 1.09.2026) or an equinox or solstice (March equinox)',
-    top: 'write seam, an equinox or solstice (December solstice), a month (january) or a date (1.09)',
+    start: 'write a date (1.09, 1.09.2026)',
+    top: 'write a date (1.09)',
     day: 'unknown day “{0}”',
     ring: 'unknown ring “{0}” (zodiac, counters)',
     direction: 'write clockwise or anticlockwise',
@@ -280,7 +214,6 @@ const MSG: Record<Lang, Record<string, string>> = {
     zodiacNames: 'write full or signs',
     counter: 'write a counter as: weeks from 1.09, then if you like to 25.06 or to 40, and a name; weeks or months',
     order: 'the end is before the start',
-    tz: 'write a time zone as +1 or -5:30',
     color: 'write a colour as weekend=#hex or lines=#hex',
     inside: 'write the size of the inside in months bands: ' + INSIDE_STEPS.join(', '),
     date: 'there is no such date: {0}',
@@ -291,8 +224,8 @@ const MSG: Record<Lang, Record<string, string>> = {
     key: 'nieznane ustawienie „{0}”',
     line: 'linia powinna być ustawieniem: nazwa, dwukropek, wartość (rok: 2027)',
     year: 'wpisz rok od ' + MIN_YEAR + ' do ' + MAX_YEAR,
-    start: 'wpisz datę (1.09, 1.09.2026) albo porę roku (wiosna)',
-    top: 'wpisz łączenie, porę roku (zima), miesiąc (styczeń) albo datę (1.09)',
+    start: 'wpisz datę (1.09, 1.09.2026)',
+    top: 'wpisz datę (1.09)',
     day: 'nieznany dzień „{0}”',
     ring: 'nieznany pierścień „{0}” (pory roku, zodiak, liczniki)',
     direction: 'wpisz zgodnie z zegarem albo przeciwnie do zegara',
@@ -301,7 +234,6 @@ const MSG: Record<Lang, Record<string, string>> = {
     zodiacNames: 'wpisz pełne albo znaki',
     counter: 'wpisz licznik jako: tygodnie od 1.09, dalej ewentualnie do 25.06 albo do 40 i nazwa; tygodnie albo miesiące',
     order: 'koniec jest przed początkiem',
-    tz: 'wpisz strefę jako +1 albo -5:30',
     color: 'wpisz kolor jako weekend=#hex albo linie=#hex',
     inside: 'wpisz wielkość wnętrza w pasach miesięcy: ' + INSIDE_STEPS.join(', '),
     date: 'nie ma takiej daty: {0}',
@@ -346,7 +278,6 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
     zodiacNames: 'full',
     rings: [],
     counters: [],
-    tz: 0,
     colors: {},
     title: [],
     inside: DEFAULT_INSIDE,
@@ -377,15 +308,11 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
       const date = parseDate(low);
       if (date && !validDate(date)) issues.push({ line: n, message: say('date', showDate(date)) });
       else if (date) { cal.start = { kind: 'date', ...date }; startLine = n; }
-      else if (POINT_ALIAS[low] !== undefined) { cal.start = { kind: 'point', which: POINT_ALIAS[low] }; startLine = n; }
       else issues.push({ line: n, message: say('start') });
     } else if (key === 'top') {
       const date = parseDate(low);
       if (date && !validDate(date)) issues.push({ line: n, message: say('date', showDate(date)) });
       else if (date) { cal.top = { kind: 'date', ...date }; topLine = n; }
-      else if (SEAM.has(low)) cal.top = { kind: 'seam' };
-      else if (POINT_ALIAS[low] !== undefined) cal.top = { kind: 'point', which: POINT_ALIAS[low] };
-      else if (MONTH_ALIAS[low] !== undefined) cal.top = { kind: 'month', m: MONTH_ALIAS[low] + 1 };
       else issues.push({ line: n, message: say('top') });
     } else if (key === 'firstDay') {
       const d = DAY_ALIAS[low];
@@ -405,13 +332,6 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
         const ring = RING_ALIAS[r];
         if (!ring) issues.push({ line: n, message: say('ring', r) });
         else if (!cal.rings.includes(ring)) cal.rings.push(ring);
-      }
-    } else if (key === 'tz') {
-      const t = low.replace(/\s+/g, '').match(/^(?:utc|gmt)?(?:([+-]?)(\d{1,2})(?::?(\d{2}))?)?$/);
-      if (!t || (!t[2] && !/^(utc|gmt)$/.test(low)) || +(t[2] ?? 0) > 14 || +(t[3] ?? 0) > 59) {
-        issues.push({ line: n, message: say('tz') });
-      } else {
-        cal.tz = (t[1] === '-' ? -1 : 1) * ((+(t[2] ?? 0)) * 60 + +(t[3] ?? 0));
       }
     } else if (key === 'colors') {
       for (const pair of value.split(',').map((s) => s.trim()).filter(Boolean)) {
@@ -489,15 +409,11 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
 }
 
 /** The days on the disc: the first one (epoch day) and how many. One year: up to the day before
- * the same date a year later, or before the same equinox or solstice comes again. */
+ * the same date a year later. */
 export interface Range { start: number; days: number }
 
 export function calendarRange(cal: Calendar): Range {
   const y = cal.year, s = cal.start;
-  if (s.kind === 'point') {
-    const a = seasonDay(y, s.which, cal.tz);
-    return { start: a, days: seasonDay(y + 1, s.which, cal.tz) - a };
-  }
   const a = epochDay(s.y ?? y, s.m, s.d);
   return { start: a, days: epochDay((s.y ?? y) + 1, s.m, s.d) - a }; // 29.02 → up to 28.02
 }
@@ -517,7 +433,7 @@ export function occurrence(r: Range, { m, d, y }: DayDate): number | undefined {
 
 /** Names the form and the written settings use, in the language of the page. */
 export function names(lang: Lang) {
-  return { months: MONTHS[lang], points: POINTS[lang], weekdays: WEEKDAYS[lang] };
+  return { months: MONTHS[lang], weekdays: WEEKDAYS[lang] };
 }
 
 export { parseDate, validDate, showDate };
@@ -526,14 +442,14 @@ const WORDS: Record<Lang, Record<string, string>> = {
   en: {
     year: 'year', start: 'from', top: 'top', firstDay: 'first day', direction: 'direction', weekdays: 'weekdays',
     full: 'full', short: 'short', roman: 'roman', signs: 'signs',
-    rings: 'rings', counter: 'counter', tz: 'timezone', colors: 'colors', title: 'title', inside: 'inside', signature: 'signature',
+    rings: 'rings', counter: 'counter', colors: 'colors', title: 'title', inside: 'inside', signature: 'signature',
     seam: 'seam', anticlockwise: 'anticlockwise', inwards: 'inwards', none: 'none', from: 'from', to: 'to',
     weeks: 'weeks', months: 'months', zodiac: 'zodiac', counters: 'counters', lines: 'lines',
   },
   pl: {
     year: 'rok', start: 'od', top: 'góra', firstDay: 'pierwszy dzień', direction: 'kierunek', weekdays: 'dni tygodnia',
     full: 'pełne', short: 'skrócone', roman: 'rzymskie', signs: 'znaki',
-    rings: 'pierścienie', counter: 'licznik', tz: 'strefa', colors: 'kolory', title: 'tytuł', inside: 'wnętrze', signature: 'podpis',
+    rings: 'pierścienie', counter: 'licznik', colors: 'kolory', title: 'tytuł', inside: 'wnętrze', signature: 'podpis',
     seam: 'łączenie', anticlockwise: 'przeciwnie do zegara', inwards: 'do środka', none: 'brak', from: 'od', to: 'do',
     weeks: 'tygodnie', months: 'miesiące', zodiac: 'zodiak', counters: 'liczniki', lines: 'linie',
   },
@@ -553,12 +469,8 @@ export function formatCalendar(cal: Calendar, lang: Lang): string {
   const lines: string[] = [`${w.year}: ${cal.year}`];
   const put = (key: string, value: string) => lines.push(`${w[key]}: ${value}`);
   const st = cal.start;
-  if (st.kind === 'point') put('start', POINTS[lang][st.which]);
-  else if (st.m !== 1 || st.d !== 1) put('start', showDate({ m: st.m, d: st.d }));
-  const t = cal.top;
-  if (t.kind === 'point') put('top', POINTS[lang][t.which]);
-  else if (t.kind === 'month') put('top', MONTHS[lang][t.m - 1]);
-  else if (t.kind === 'date') put('top', showDate(t));
+  if (st.m !== 1 || st.d !== 1) put('start', showDate({ m: st.m, d: st.d }));
+  if (cal.top.kind === 'date') put('top', showDate(cal.top));
   if (cal.firstDay !== 0) put('firstDay', DAY_WORDS[lang][cal.firstDay]);
   if (!cal.clockwise) put('direction', w.anticlockwise);
   if (!cal.outwards) put('weekdays', w.inwards);
@@ -568,10 +480,6 @@ export function formatCalendar(cal: Calendar, lang: Lang): string {
   for (const c of cal.counters) {
     const until = !c.until ? '' : ` ${w.to} ${c.until.kind === 'count' ? c.until.n : showDate(c.until)}`;
     put('counter', `${w[c.unit]} ${w.from} ${showDate(c.from)}${until}${c.name ? ' ' + c.name : ''}`);
-  }
-  if (cal.tz !== 0) {
-    const a = Math.abs(cal.tz);
-    put('tz', `${cal.tz < 0 ? '-' : '+'}${Math.floor(a / 60)}${a % 60 ? ':' + String(a % 60).padStart(2, '0') : ''}`);
   }
   const colors = Object.entries(cal.colors).map(([k, v]) => `${k === 'lines' ? w.lines : k}=${v}`);
   if (colors.length) put('colors', colors.join(', '));
@@ -696,21 +604,12 @@ export function layoutCalendar(cal: Calendar, lang: Lang): Layout {
   const segments: Partial<Record<Band, Segment[]>> = {};
   for (const b of ['zodiac', 'months'] as Band[]) segments[b] = bandSegments(cal, range, b, lang);
 
-  // Angles before turning; the turn puts the chosen thing at the top (270°).
-  const rel = (x: number) => step * (1 + (offset + x) / 7);
-  const segEnd = (s: Segment) => (s.to <= N ? rel(s.to) : rel(s.to - N) + 360);
+  // Angles before turning; the turn puts the chosen week at the top (270°).
   let anchor = step / 2; // the seam column
   const t = cal.top;
   if (t.kind === 'date') {
     const i = occurrence(range, t) ?? 0;
     anchor = step * (1 + Math.floor((offset + i) / 7) + 0.5);
-  } else if (t.kind === 'point') {
-    const [y0] = dateOf(range.start);
-    const i = [y0, y0 + 1].map((y) => seasonDay(y, t.which, cal.tz) - range.start).find((x) => x >= 0 && x < N) ?? 0;
-    anchor = step * (1 + Math.floor((offset + i) / 7) + 0.5);
-  } else if (t.kind === 'month') {
-    const s = segments.months!.find((x) => x.key === t.m - 1);
-    if (s) anchor = (rel(s.from) + segEnd(s)) / 2;
   }
   const counters = cal.counters.map((c) => counterSegments(c, range));
   const counterStarts = cal.counters.map((c) => counterStart(c, range));

@@ -4,7 +4,7 @@
 
 Cały rok na jednej kartce A4, narysowany jako koło.
 
-![Rok szkolny 2026/27 z przesileniem grudniowym na górze](examples/rok-szkolny-2026-pl.svg)
+![Rok szkolny 2026/27 z Nowym Rokiem na górze](examples/rok-szkolny-2026-pl.svg)
 
 ## Pomysł
 
@@ -14,10 +14,9 @@ pola — zewnętrzne są cieńsze, ale dłuższe. Pośrodku jest rok, a wokół 
 miesiące. Między nimi może stać pas zodiaku oraz liczniki — tygodnie roku szkolnego, miesiące
 od danego dnia — jako własne cienkie pasy.
 
-Rok może zaczynać się dowolnego dnia — 1 stycznia, na początku roku szkolnego, w dniu równonocy
-albo przesilenia — i trwa od niego rok. Tam, gdzie jego koniec spotyka się z początkiem, jest
-łączenie: jedna kolumna z nazwami dni tygodnia. Koło można obrócić tak, żeby na górze było
-łączenie, równonoc albo przesilenie, miesiąc albo wybrany dzień. Domyślnie czas biegnie zgodnie z ruchem wskazówek zegara, a każdy
+Rok może zaczynać się dowolnego dnia — 1 stycznia, na początku roku szkolnego — i trwa od niego
+rok. Tam, gdzie jego koniec spotyka się z początkiem, jest łączenie: jedna kolumna z nazwami dni
+tygodnia. Na górze jest łączenie albo tydzień wybranego dnia. Domyślnie czas biegnie zgodnie z ruchem wskazówek zegara, a każdy
 tydzień od środka na zewnątrz; oba kierunki można odwrócić.
 
 ## Ustawienia
@@ -31,8 +30,7 @@ na kartce.
 |---|---|
 | `rok: 2026` | Rok, w którym kalendarz się zaczyna. Bez tej linii — bieżący. |
 | `od: 1.09` | Pierwszy dzień. Kalendarz trwa do dnia przed tą samą datą rok później. Pełna data (`1.09.2026`, `2026-09-01`) ustawia też rok. Domyślnie 1 stycznia. |
-| `od: równonoc marcowa` | Dzień równonocy albo przesilenia (`równonoc marcowa`, `przesilenie czerwcowe`, `równonoc wrześniowa`, `przesilenie grudniowe`). Kalendarz trwa do dnia przed następnym takim samym. Nazwy biorą się od miesięcy, nie pór roku: to, którą porę roku zaczynają, zależy od półkuli. |
-| `góra: łączenie` | Co jest na górze koła: łączenie (domyślnie), tydzień równonocy albo przesilenia (`przesilenie grudniowe`), środek miesiąca (`styczeń`) albo tydzień danego dnia (`1.09`). |
+| `góra: 1.01` | Dzień, którego tydzień jest na górze koła. Bez tej linii — łączenie. |
 | `pierwszy dzień: nd` | Dzień, od którego zaczyna się tydzień na promieniu: na najbardziej wewnętrznym pierścieniu, a przy `dni tygodnia: do środka` na zewnętrznym. Domyślnie poniedziałek. `śr` daje weekend w środku. |
 | `kierunek: przeciwnie do zegara` | W którą stronę idą tygodnie: `zgodnie z zegarem` (domyślnie) albo `przeciwnie do zegara`. |
 | `dni tygodnia: do środka` | W którą stronę biegnie tydzień wzdłuż promienia: `od środka` (domyślnie) albo `do środka`, od krawędzi. |
@@ -40,7 +38,6 @@ na kartce.
 | `zodiak: znaki` | Jak nazwany jest zodiak: `pełne` (domyślnie) albo `znaki` (♈ ♉ …). |
 | `pierścienie: zodiak, liczniki` | Pasy między rokiem pośrodku a miesiącami, które są zawsze, od środka na zewnątrz. `liczniki` ustawia miejsce liczników (bez tego stoją na końcu, tuż wewnątrz miesięcy). Domyślnie żadnych. |
 | `licznik: tygodnie od 1.09 do 25.06 tygodnie szkolne` | Pas z tygodniami albo miesiącami liczonymi od danego dnia: 1, 2, 3…, każdy numer nad dniami, które obejmuje, zmiana w dokładne dni. Dzień bez roku się powtarza: co roku liczy się od nowa od 1. Z rokiem (`od 2027-05-03`) liczy dalej, a przed tym dniem nic nie pokazuje. `do` kończy licznik w dany dzień, ostatni liczony (`do 25.06`), albo po danym numerze (`do 40`); bez tego liczy do następnego początku albo do końca kalendarza. Tygodnie roku kalendarzowego zaczyna się od pierwszego poniedziałku (`od 4.01.2027`). Nazwa nie jest konieczna; stoi tuż przed początkiem licznika (numerem 1) — przed łączeniem, jeśli licznik zaczyna się razem z kalendarzem albo wcześniej — w miejscu numerów, które zakrywa. Kilka linii `licznik` to kilka pasów. |
-| `strefa: +1` | Strefa czasowa dla dat równonocy i przesileń. Domyślnie UTC. |
 | `kolory: weekend=#eaeaea, linie=#c0c0c0` | Kolory pól weekendu i linii. |
 | `tytuł: A.D. 2027` | Napis w środku koła zamiast roku (albo `2026/2027` dla roku przechodzącego przez Nowy Rok). Kilka linii `tytuł` to kilka wierszy; `tytuł: brak` zostawia środek pusty. Wielkość liter dopasowuje się do miejsca. |
 | `wnętrze: 4` | Wielkość wszystkiego wewnątrz miesięcy — roku i pasów — liczona w pasach miesięcy: od `1` do `5`, domyślnie `3`; inna liczba czyta się jako najbliższa z nich. Rok zajmuje tyle co jeden pas miesięcy, domyślnie tak samo zodiak; pasy dzielą się wnętrzem, więc miesiące i dni stoją w miejscu, gdy przybywa albo ubywa pasów. `1` to ćwierć promienia, `5` — połowa. |
@@ -48,7 +45,7 @@ na kartce.
 | `format: 1` | Wersja formatu pliku. Zapis do pliku ją dodaje; plik bez niej to format 1. |
 
 Angielskie słowa kluczowe: `year`, `from`, `top`, `first day`, `direction` (`clockwise`, `anticlockwise`),
-`weekdays` (`outwards`, `inwards`), `months` (`full`, `short`, `roman`), `zodiac` (`full`, `signs`), `rings`, `counter`, `timezone`, `colors`, `title`, `inside`, `signature`;
+`weekdays` (`outwards`, `inwards`), `months` (`full`, `short`, `roman`), `zodiac` (`full`, `signs`), `rings`, `counter`, `colors`, `title`, `inside`, `signature`;
 jednostki `weeks`, `months`; `to` albo `until` zamiast `do`.
 
 Tydzień biegnie wzdłuż promienia i dalej do następnej kolumny, więc jego kolejność na promieniu
@@ -67,9 +64,7 @@ Gotowe ustawienia i narysowane z nich arkusze są w [`examples/`](examples).
 
 ## Co jest liczone
 
-- **Równonoce i przesilenia** według Meeusa, *Astronomical Algorithms*, rozdz. 27 — z dokładnością
-  do około minuty, dla lat 1583–2998. Datę bierze się w strefie z `strefa:`.
-- **Dni tygodnia i lata przestępne** dla dowolnego roku kalendarza gregoriańskiego.
+- **Dni tygodnia i lata przestępne** dla dowolnego roku kalendarza gregoriańskiego (1583–2998).
 - **Znaki zodiaku** mają stałe daty, jak w drukowanych kalendarzach.
 
 ## Użycie kodu
@@ -108,7 +103,7 @@ z każdym wydaniem — nowa opcja → 1.1, poprawka rysunku → 1.0.1.
 ## Testy
 
 ```sh
-npm test            # równonoce vs. opublikowane, ustawienia, zakres, góra i liczniki, rysowanie każdego roku
+npm test            # ustawienia, zakres, góra i liczniki, rysowanie każdego roku
 npm run examples    # przerysowanie examples/
 ```
 
