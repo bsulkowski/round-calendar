@@ -95,9 +95,10 @@ export interface DayDate { m: number; d: number; y?: number }
 export type When = ({ kind: 'date' } & DayDate) | { kind: 'easter'; offset: number };
 export interface GroupDay { when: When; label: string }
 
-/** A group of days shaded in one colour: holidays, birthdays, whatever the reader gathers.
- * `lines` are the group's lines as written, comments included, so they are saved as they were. */
-export interface Group { name: string; color?: string; days: GroupDay[]; lines: string[] }
+/** A group of days in its own colours: holidays, birthdays, whatever the reader gathers. The
+ * background shades the days' cells (without one they stay as they are), the text colours their
+ * numbers. `lines` are the group's lines as written, comments included, so they are saved as they were. */
+export interface Group { name: string; background?: string; text?: string; days: GroupDay[]; lines: string[] }
 
 
 /** A line that could not be read; in a group, the group's index, so a form can show it there. */
@@ -139,7 +140,8 @@ const KEYS: Record<string, string> = {
   wnętrze: 'inside', wnetrze: 'inside', inside: 'inside',
   podpis: 'signature', signature: 'signature',
   licznik: 'counter', counter: 'counter',
-  kolor: 'groupColor', color: 'groupColor', colour: 'groupColor',
+  tło: 'groupBackground', tlo: 'groupBackground', background: 'groupBackground',
+  tekst: 'groupText', text: 'groupText',
   format: 'format',
 };
 
@@ -189,6 +191,8 @@ const UNIT_ALIAS: Record<string, Unit> = {
 const COLOR_ALIAS: Record<string, string> = { weekend: 'weekend', linie: 'lines', lines: 'lines' };
 
 export const DEFAULT_COLORS: Record<string, string> = { weekend: '#eaeaea', lines: '#c0c0c0' };
+/** The colour of the day numbers, unless a group gives its own. */
+export const DAY_INK = '#404040';
 
 const NONE = new Set(['brak', 'none', '-']);
 
@@ -240,7 +244,7 @@ const MSG: Record<Lang, Record<string, string>> = {
     inside: 'write the size of the inside in months bands: ' + INSIDE_STEPS.join(', '),
     date: 'there is no such date: {0}',
     group: 'a day belongs to a group: write the group’s name in brackets above it ([Holidays])',
-    groupColor: 'write the colour of a group as #hex, under the group’s name',
+    groupColor: 'write a group’s colour as #hex (a background also as none), under the group’s name',
     dayLine: 'write a day as 1.11, 1.11.2027 or easter+1, then a name if you like',
     format: 'these settings were saved in format {0}, newer than this page knows (1); they may not show as intended',
   },
@@ -262,7 +266,7 @@ const MSG: Record<Lang, Record<string, string>> = {
     inside: 'wpisz wielkość wnętrza w pasach miesięcy: ' + INSIDE_STEPS.join(', '),
     date: 'nie ma takiej daty: {0}',
     group: 'dzień należy do grupy: wpisz nad nim jej nazwę w nawiasie ([Święta])',
-    groupColor: 'wpisz kolor grupy jako #hex, pod jej nazwą',
+    groupColor: 'wpisz kolor grupy jako #hex (tło także jako brak), pod jej nazwą',
     dayLine: 'wpisz dzień jako 1.11, 1.11.2027 albo wielkanoc+1, a dalej ewentualnie nazwę',
     format: 'ustawienia zapisano w formacie {0}, nowszym niż zna ta strona (1); mogą wyglądać inaczej, niż zamierzono',
   },
@@ -443,10 +447,13 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
         if (!c || !name) issues.push({ line: n, message: say('color') });
         else cal.colors[name] = c[2];
       }
-    } else if (key === 'groupColor') {
-      const c = value.match(/^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i);
-      if (!group || !c) issues.push({ line: n, message: say('groupColor') });
-      else group.color = value.toLowerCase();
+    } else if (key === 'groupBackground' || key === 'groupText') {
+      const c = /^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(value);
+      const none = key === 'groupBackground' && NONE.has(low);
+      if (!group || !(c || none)) issues.push({ line: n, message: say('groupColor') });
+      else if (key === 'groupText') group.text = low;
+      else if (none) delete group.background;
+      else group.background = low;
     } else if (key === 'counter') {
       // weeks from 1.09 to 25.06 Name — "from" may be left out; "to" only before a date or a number,
       // so a name may start with the word ("do wakacji").
@@ -543,46 +550,6 @@ export function groupDays(g: Group, r: Range): { day: number; label: string }[] 
   return out.sort((a, b) => a.day - b.day);
 }
 
-/* ---------- ready-made groups ---------- */
-
-/** Public holidays of a country, as the lines of a group in the words of a language. The days
- * off work in Poland (Christmas Eve since 2025); Pentecost is a Sunday, but it is one of them. */
-const HOLIDAY_SETS: Record<string, { country: Record<Lang, string>; name: Record<Lang, string>; days: [string, string, string][] }> = {
-  pl: {
-    country: { pl: 'Polska', en: 'Poland' },
-    name: { pl: 'Święta', en: 'Holidays in Poland' },
-    days: [
-      ['1.01', 'Nowy Rok', 'New Year’s Day'],
-      ['6.01', 'Trzech Króli', 'Epiphany'],
-      ['easter', 'Wielkanoc', 'Easter Sunday'],
-      ['easter+1', 'Poniedziałek Wielkanocny', 'Easter Monday'],
-      ['1.05', 'Święto Pracy', 'Labour Day'],
-      ['3.05', 'Święto Konstytucji 3 Maja', 'Constitution Day'],
-      ['easter+49', 'Zielone Świątki', 'Pentecost'],
-      ['easter+60', 'Boże Ciało', 'Corpus Christi'],
-      ['15.08', 'Wniebowzięcie NMP', 'Assumption Day'],
-      ['1.11', 'Wszystkich Świętych', 'All Saints’ Day'],
-      ['11.11', 'Święto Niepodległości', 'Independence Day'],
-      ['24.12', 'Wigilia', 'Christmas Eve'],
-      ['25.12', 'Boże Narodzenie', 'Christmas Day'],
-      ['26.12', 'Drugi dzień Bożego Narodzenia', 'Second Day of Christmas'],
-    ],
-  },
-};
-
-/** The ready-made groups a page can offer: an id and the country's name. */
-export function holidaySets(lang: Lang): { id: string; country: string }[] {
-  return Object.entries(HOLIDAY_SETS).map(([id, s]) => ({ id, country: s.country[lang] }));
-}
-
-/** A ready-made group, to be added to a calendar and edited like any other. */
-export function holidayGroup(id: string, lang: Lang): Group | undefined {
-  const set = HOLIDAY_SETS[id];
-  if (!set) return undefined;
-  const lines = set.days.map(([when, pl, en]) => `${when.replace(/^easter/, WORDS[lang].easter)} ${lang === 'pl' ? pl : en}`);
-  return { name: set.name[lang], ...parseGroupLines(lines.join('\n'), lang), lines };
-}
-
 /* ---------- writing settings ---------- */
 
 /** Names the form and the written settings use, in the language of the page. */
@@ -599,7 +566,7 @@ const WORDS: Record<Lang, Record<string, string>> = {
     rings: 'rings', counter: 'counter', colors: 'colors', title: 'title', inside: 'inside', signature: 'signature',
     seam: 'seam', anticlockwise: 'anticlockwise', inwards: 'inwards', none: 'none', from: 'from', to: 'to',
     weeks: 'weeks', months: 'months', zodiac: 'zodiac', counters: 'counters', lines: 'lines',
-    color: 'colour', easter: 'easter',
+    background: 'background', text: 'text', easter: 'easter',
   },
   pl: {
     year: 'rok', start: 'od', top: 'góra', firstDay: 'pierwszy dzień', direction: 'kierunek', weekdays: 'dni tygodnia',
@@ -607,7 +574,7 @@ const WORDS: Record<Lang, Record<string, string>> = {
     rings: 'pierścienie', counter: 'licznik', colors: 'kolory', title: 'tytuł', inside: 'wnętrze', signature: 'podpis',
     seam: 'łączenie', anticlockwise: 'przeciwnie do zegara', inwards: 'do środka', none: 'brak', from: 'od', to: 'do',
     weeks: 'tygodnie', months: 'miesiące', zodiac: 'zodiak', counters: 'liczniki', lines: 'linie',
-    color: 'kolor', easter: 'wielkanoc',
+    background: 'tło', text: 'tekst', easter: 'wielkanoc',
   },
 };
 const DAY_WORDS: Record<Lang, string[]> = {
@@ -645,7 +612,8 @@ export function formatCalendar(cal: Calendar, lang: Lang): string {
   // Groups last, each under its name, with its lines as written.
   for (const g of cal.groups) {
     lines.push('', `[${g.name}]`);
-    if (g.color) put('color', g.color);
+    if (g.background) put('background', g.background);
+    if (g.text) put('text', g.text);
     lines.push(...g.lines);
   }
   return lines.join('\n') + '\n';
@@ -859,13 +827,13 @@ export function renderCalendar(cal: Calendar, lang: Lang): string {
   // columns as their width allows.
   const marked = cal.groups.map((g) => groupDays(g, L.range));
   const dateText = (d: number) => { const [, m, dd] = dateOf(L.range.start + d); return `${dd} ${MONTHS_SHORT[lang][m - 1]}`; };
-  type Row = { head: true; text: string; color: string } | { head: false; date: string; text: string };
+  type Row = { head: true; text: string; background?: string } | { head: false; date: string; text: string; ink: string };
   const rows: Row[] = cal.groups.flatMap((g, i): Row[] => {
     const items = marked[i].filter((x) => x.label);
     if (!items.length) return [];
     return [
-      ...(g.name ? [{ head: true as const, text: g.name, color: g.color ?? color('weekend') }] : []),
-      ...items.map((x) => ({ head: false as const, date: dateText(x.day), text: x.label })),
+      ...(g.name ? [{ head: true as const, text: g.name, background: g.background }] : []),
+      ...items.map((x) => ({ head: false as const, date: dateText(x.day), text: x.label, ink: g.text ?? '#6b6b6b' })),
     ];
   });
   const GAP = 22, COL_GAP = 18, LEAD = 1.4;
@@ -935,9 +903,9 @@ export function renderCalendar(cal: Calendar, lang: Lang): string {
   const weekendPath: string[] = [];
   for (let d = 0; d < N; d++) if ((cellOf(d).ring + firstDay) % 7 >= 5) weekendPath.push(cell(d));
   if (weekendPath.length) o.push(`<path d="${weekendPath.join(' ')}" fill="${esc(color('weekend'))}"/>`);
-  // Days of the groups, over the weekends; a later group over an earlier one.
+  // Backgrounds of the groups, over the weekends; a later group over an earlier one.
   cal.groups.forEach((g, i) => {
-    if (marked[i].length) o.push(`<path d="${marked[i].map((x) => cell(x.day)).join(' ')}" fill="${esc(g.color ?? color('weekend'))}"/>`);
+    if (g.background && marked[i].length) o.push(`<path d="${marked[i].map((x) => cell(x.day)).join(' ')}" fill="${esc(g.background)}"/>`);
   });
 
   // Lines: circles between the bands, steps between months, ticks in the months band.
@@ -992,11 +960,14 @@ export function renderCalendar(cal: Calendar, lang: Lang): string {
   const ringArc = (ring: number) => rad(step) * rMid(dayR(ring));
   const outerThick = R - posR(6)[0];
   const fDay = Math.min(11.5, outerThick * 0.55, rad(step) * rMid(posR(0)) * 0.62);
+  // Colours of the day numbers: a later group's over an earlier one's.
+  const dayInk = new Map<number, string>();
+  cal.groups.forEach((g, i) => { if (g.text) for (const x of marked[i]) dayInk.set(x.day, g.text); });
   o.push('<g>');
   for (let d = 0; d < N; d++) {
     const { col, ring } = cellOf(d);
     const a = A((col + 0.5) * step);
-    o.push(cellText(a, rMid(dayR(ring)), String(dateOf(L.range.start + d)[2]), fDay, '#404040'));
+    o.push(cellText(a, rMid(dayR(ring)), String(dateOf(L.range.start + d)[2]), fDay, dayInk.get(d) ?? DAY_INK));
   }
   for (let k = 0; k < 7; k++) {
     const name = WEEKDAYS[lang][(k + firstDay) % 7];
@@ -1072,12 +1043,14 @@ export function renderCalendar(cal: Calendar, lang: Lang): string {
     rows.slice(0, lay.cols * per).forEach((row, i) => {
       const x = M + Math.floor(i / per) * colW;
       const y = top + (i % per) * f * LEAD + f * 0.8;
+      // A group with a background has a swatch of it before its name; dates take the colour of the
+      // numbers on the disc.
       if (row.head) {
         const s = f * 0.8;
-        o.push(`<rect x="${r2(x)}" y="${r2(y - s * 0.9)}" width="${r2(s)}" height="${r2(s)}" fill="${esc(row.color)}" stroke="${esc(line)}" stroke-width="0.8"/>`);
-        o.push(`<text x="${r2(x + f * 1.2)}" y="${r2(y)}" font-weight="700">${esc(row.text)}</text>`);
+        if (row.background) o.push(`<rect x="${r2(x)}" y="${r2(y - s * 0.9)}" width="${r2(s)}" height="${r2(s)}" fill="${esc(row.background)}" stroke="${esc(line)}" stroke-width="0.8"/>`);
+        o.push(`<text x="${r2(row.background ? x + f * 1.2 : x)}" y="${r2(y)}" font-weight="700">${esc(row.text)}</text>`);
       } else {
-        o.push(`<text x="${r2(x)}" y="${r2(y)}" fill="#6b6b6b">${esc(row.date)}</text>`);
+        o.push(`<text x="${r2(x)}" y="${r2(y)}" fill="${esc(row.ink)}">${esc(row.date)}</text>`);
         o.push(`<text x="${r2(x + dateW)}" y="${r2(y)}">${esc(row.text)}</text>`);
       }
     });

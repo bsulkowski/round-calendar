@@ -12,8 +12,8 @@ Tygodnie idą po obwodzie jak godziny na tarczy zegara, a każdy dzień tygodnia
 wszystkie poniedziałki leżą na jednym okręgu, a weekendy tworzą pas. Pierścienie mają równe
 pola — zewnętrzne są cieńsze, ale dłuższe. Pośrodku jest rok, a wokół niego, tuż wewnątrz dni,
 miesiące. Między nimi może stać pas zodiaku oraz liczniki — tygodnie roku szkolnego, miesiące
-od danego dnia — jako własne cienkie pasy. Święta i własne dni są cieniowane grupami, a te
-z nazwami wypisane pod tarczą.
+od danego dnia — jako własne cienkie pasy. Święta i własne dni dostają kolory swojej grupy —
+cieniowane tło, kolorowe numery — a te z nazwami są wypisane pod tarczą.
 
 Rok zaczyna się od miesiąca — stycznia albo, dla roku szkolnego, września — i trwa dwanaście
 miesięcy. Tam, gdzie jego koniec spotyka się z początkiem, jest łączenie: jedna kolumna z nazwami
@@ -47,16 +47,16 @@ na kartce.
 
 Angielskie słowa kluczowe: `year`, `from`, `top`, `first day`, `direction` (`clockwise`, `anticlockwise`),
 `weekdays` (`outwards`, `inwards`), `months` (`full`, `short`, `roman`), `zodiac` (`full`, `signs`), `rings`, `counter`, `colors`, `title`, `inside`, `signature`;
-jednostki `weeks`, `months`; `to` albo `until` zamiast `do`; w grupach `colour` albo `color` zamiast `kolor`, `easter` zamiast `wielkanoc`.
+jednostki `weeks`, `months`; `to` albo `until` zamiast `do`; w grupach `background` zamiast `tło`, `text` zamiast `tekst`, `easter` zamiast `wielkanoc`.
 
 ### Własne dni
 
-Dni do zacieniowania — święta, urodziny, koniec semestru — są zebrane w grupy. Linia w nawiasie
-otwiera grupę i ją nazywa; linie pod nią to jej dni, każdy z datą i, jeśli trzeba, nazwą:
+Dni do wyróżnienia — święta, urodziny, koniec semestru — są zebrane w grupy. Linia w nawiasie
+otwiera grupę i ją nazywa; linie pod nią to jej kolory i dni, każdy z datą i, jeśli trzeba, nazwą:
 
 ```
 [Urodziny]
-kolor: #cfe8cf
+tekst: #c0392b
 14.03 Ala
 2.07          # dziadek — bez nazwy na kartce
 1.10.2027 Ślub
@@ -66,17 +66,18 @@ wielkanoc+1 Poniedziałek Wielkanocny
 | Linia | Co robi |
 |---|---|
 | `[Święta]` | Otwiera grupę. Nazwa jest nagłówkiem grupy na liście pod tarczą; `[]` ją pomija. |
-| `kolor: #cfe8cf` | Kolor, którym cieniowane są dni grupy, domyślnie kolor weekendu. Kolor późniejszej grupy przykrywa kolor wcześniejszej. |
+| `tło: #eaeaea` | Tło dni grupy. Bez niego (albo z `tło: brak`) ich pola zostają takie jak są: białe, a w weekend szare. |
+| `tekst: #c0392b` | Kolor numerów dni grupy, na tarczy i na liście. |
 | `14.03 Ala` | Dzień co roku. |
 | `1.10.2027 Ślub` | Dzień raz, w tym roku (także `2027-10-01`). |
 | `wielkanoc+60 Boże Ciało` | Dzień liczony od Niedzieli Wielkanocnej: `wielkanoc`, `wielkanoc+1`, `wielkanoc-2`. |
 
-Dzień z nazwą trafia na listę pod tarczą, w kolejności dat; dzień bez nazwy jest tylko
-zacieniowany, a co to za dzień, może powiedzieć komentarz po `#`. Tarcza stoi pośrodku, dopóki
-lista mieści się pod nią; dłuższa lista przesuwa ją w górę.
+Kolory późniejszej grupy przykrywają kolory wcześniejszej. Dzień z nazwą trafia na listę pod
+tarczą, w kolejności dat; dzień bez nazwy jest tylko pokolorowany, a co to za dzień, może
+powiedzieć komentarz po `#`. Tarcza stoi pośrodku, dopóki lista mieści się pod nią; dłuższa lista
+przesuwa ją w górę.
 
-Święta danego kraju są gotową grupą, którą się dodaje i poprawia jak każdą inną — na razie
-Polska (`holidayGroup('pl', lang)`): dni wolne od pracy, z Wigilią, która jest nim od 2025 roku.
+Przykłady mają święta w Polsce jako grupę: dni wolne od pracy, z Wigilią, która jest nim od 2025 roku.
 
 Tydzień biegnie wzdłuż promienia i dalej do następnej kolumny, więc jego kolejność na promieniu
 to zawsze siedem dni po kolei; `pierwszy dzień` wybiera, od którego się zaczyna, `dni tygodnia` —
@@ -113,7 +114,6 @@ calendarRange(cal);                     // { start, days }: pierwszy dzień (dni
 const svg = renderCalendar(cal, 'pl');  // <svg …> 210 × 297 mm
 formatCalendar(cal, 'pl');              // ustawienia znów jako tekst: rok, potem to, co różni się od domyślnych
 withFormatLine(text);                   // tekst z linią `format: 1`, tak jak przy zapisie do pliku
-holidayGroup('pl', 'pl');               // święta w Polsce jako grupa: { name, days, lines }
 parseGroupLines(text, 'pl');            // dni jednej grupy z samych jej linii, z błędami
 ```
 
