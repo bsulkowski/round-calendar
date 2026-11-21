@@ -76,8 +76,8 @@ A later group's colours cover an earlier one's. A day with a name goes on the li
 disc, by date; a day without one is only coloured, and a comment after `#` can say what it is.
 The disc stays in the middle while the list fits under it; a longer list moves it up.
 
-The examples have the holidays in Poland as a group: the days off work, with Christmas Eve, which
-became one in 2025.
+The examples have the holidays in Poland as a group — the days off work, with Christmas Eve, which
+became one in 2025 — and another of known days that are not days off.
 
 The week runs along the radius and on into the next column, so its order on the radius is always
 the seven days in sequence; `first day` chooses where the sequence starts, `weekdays` which way it runs.

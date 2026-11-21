@@ -1036,13 +1036,27 @@ export function renderCalendar(cal: Calendar, lang: Lang): string {
     const top = cy + R + GAP;
     let lay = listLayout(9.5, listBottom - top);
     while (!lay.fits && lay.f > 6) lay = listLayout(lay.f - 0.25, listBottom - top);
-    // Rows that still do not fit are left out; otherwise the columns are filled evenly.
+    // Columns filled evenly, a group's name never last in a column; rows that still do not fit
+    // are left out.
     const { f, dateW, colW } = lay;
-    const per = lay.fits ? Math.ceil(rows.length / lay.cols) : lay.per;
+    const place = (per: number) => {
+      const at: [number, number][] = [];
+      let c = 0, k = 0;
+      for (const row of rows) {
+        if (k >= per || (row.head && k === per - 1 && k > 0)) { c++; k = 0; }
+        at.push([c, k++]);
+      }
+      return at;
+    };
+    let per = lay.fits ? Math.ceil(rows.length / lay.cols) : lay.per;
+    let at = place(per);
+    while (per < lay.per && at[at.length - 1][0] >= lay.cols) at = place(++per);
     o.push(`<g class="days" font-size="${r2(f)}" fill="#404040">`);
-    rows.slice(0, lay.cols * per).forEach((row, i) => {
-      const x = M + Math.floor(i / per) * colW;
-      const y = top + (i % per) * f * LEAD + f * 0.8;
+    rows.forEach((row, i) => {
+      const [c, k] = at[i];
+      if (c >= lay.cols) return;
+      const x = M + c * colW;
+      const y = top + k * f * LEAD + f * 0.8;
       // A group with a background has a swatch of it before its name; dates take the colour of the
       // numbers on the disc.
       if (row.head) {

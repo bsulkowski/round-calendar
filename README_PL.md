@@ -77,7 +77,8 @@ tarczą, w kolejności dat; dzień bez nazwy jest tylko pokolorowany, a co to za
 powiedzieć komentarz po `#`. Tarcza stoi pośrodku, dopóki lista mieści się pod nią; dłuższa lista
 przesuwa ją w górę.
 
-Przykłady mają święta w Polsce jako grupę: dni wolne od pracy, z Wigilią, która jest nim od 2025 roku.
+Przykłady mają święta w Polsce jako grupę — dni wolne od pracy, z Wigilią, która jest nim od 2025
+roku — i drugą grupę ze znanymi dniami, które nie są wolne.
 
 Tydzień biegnie wzdłuż promienia i dalej do następnej kolumny, więc jego kolejność na promieniu
 to zawsze siedem dni po kolei; `pierwszy dzień` wybiera, od którego się zaczyna, `dni tygodnia` —

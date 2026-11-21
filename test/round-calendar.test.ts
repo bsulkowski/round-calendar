@@ -42,7 +42,7 @@ test('both examples read without issues and mean the same', () => {
     groups: c.groups.map((g) => ({ ...g, name: '', lines: [], days: g.days.map((d) => ({ ...d, label: '' })) })),
   });
   assert.deepEqual(unnamed(en), unnamed(pl));
-  assert.deepEqual(pl.groups.map((g) => g.days.length), [14, 2]);
+  assert.deepEqual(pl.groups.map((g) => g.days.length), [14, 13, 2]);
 });
 
 test('the range: a calendar year by default, otherwise a year from the start of a month', () => {

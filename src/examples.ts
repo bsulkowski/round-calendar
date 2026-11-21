@@ -23,12 +23,28 @@ easter+1 Easter Monday
 3.05 Constitution Day
 easter+49 Pentecost
 easter+60 Corpus Christi
-15.08 Assumption Day
+15.08 Armed Forces Day
 1.11 All Saints’ Day
 11.11 Independence Day
 24.12 Christmas Eve
 25.12 Christmas Day
 26.12 Second Day of Christmas
+
+[Observances in Poland]   # known days, not days off
+text: #1f3a7a
+21.01 Grandmother’s Day
+22.01 Grandfather’s Day
+easter-52 Fat Thursday
+14.02 Valentine’s Day
+8.03 Women’s Day
+1.04 April Fools’ Day
+26.05 Mother’s Day
+1.06 Children’s Day
+23.06 Father’s Day
+30.09 Boys’ Day
+14.10 National Education Day
+29.11 St Andrew’s Eve
+6.12 St Nicholas Day
 
 [Birthdays]
 text: #c0392b          # the colour of the day numbers
@@ -57,12 +73,28 @@ wielkanoc+1 Poniedziałek Wielkanocny
 3.05 Święto Konstytucji 3 Maja
 wielkanoc+49 Zielone Świątki
 wielkanoc+60 Boże Ciało
-15.08 Wniebowzięcie NMP
+15.08 Święto Wojska Polskiego
 1.11 Wszystkich Świętych
 11.11 Święto Niepodległości
 24.12 Wigilia
 25.12 Boże Narodzenie
 26.12 Drugi dzień Bożego Narodzenia
+
+[Dni okolicznościowe]   # znane dni, które nie są wolne
+tekst: #1f3a7a
+21.01 Dzień Babci
+22.01 Dzień Dziadka
+wielkanoc-52 Tłusty czwartek
+14.02 Walentynki
+8.03 Dzień Kobiet
+1.04 Prima aprilis
+26.05 Dzień Matki
+1.06 Dzień Dziecka
+23.06 Dzień Ojca
+30.09 Dzień Chłopaka
+14.10 Dzień Edukacji Narodowej
+29.11 Andrzejki
+6.12 Mikołajki
 
 [Urodziny]
 tekst: #c0392b      # kolor numerów dni
