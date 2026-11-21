@@ -13,7 +13,7 @@ weekdays: outwards  # or inwards: the week runs from the rim to the centre
 rings: counters     # bands between the year and the months: zodiac, counters
 counter: weeks from 1.09 to 25.06 school weeks   # numbered from 1; ends on a day or a number (to 40); the name is optional
 
-[Holidays in Poland]   # a group of days: its days get its colours; those with names are listed under the disc
+[Public holidays in Poland]   # a group of days: its days get its colours; those with names are listed under the disc
 background: #eaeaea    # the cells' background; without it they stay as they are
 1.01 New Year’s Day
 6.01 Epiphany
@@ -63,7 +63,7 @@ dni tygodnia: od środka      # albo do środka: tydzień biegnie od krawędzi d
 pierścienie: liczniki        # pasy między rokiem a miesiącami: zodiak, liczniki
 licznik: tygodnie od 1.09 do 25.06 tygodnie szkolne   # numery od 1; koniec to dzień albo liczba (do 40); nazwa nie jest konieczna
 
-[Święta]            # grupa dni: jej dni dostają jej kolory; te z nazwami są wypisane pod tarczą
+[Święta państwowe w Polsce]   # grupa dni: jej dni dostają jej kolory; te z nazwami są wypisane pod tarczą
 tło: #eaeaea        # tło pól; bez niego zostają takie jak są
 1.01 Nowy Rok
 6.01 Trzech Króli

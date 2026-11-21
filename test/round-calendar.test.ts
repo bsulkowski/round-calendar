@@ -379,7 +379,7 @@ test('days on the sheet and the list under the disc', () => {
   const svg = (text: string) => renderCalendar(parseCalendar(text, 'pl', 2026), 'pl');
   const plain = svg('rok: 2027');
   assert.ok(!plain.includes('class="days"'));
-  const holidays = EXAMPLE.pl.slice(EXAMPLE.pl.indexOf('[Święta]'), EXAMPLE.pl.indexOf('[Urodziny]'));
+  const holidays = EXAMPLE.pl.slice(EXAMPLE.pl.indexOf('[Święta państwowe w Polsce]'), EXAMPLE.pl.indexOf('[Urodziny]'));
   const withList = svg(`rok: 2027\n${holidays}\n[Urodziny]\ntło: #cfe8cf\ntekst: #c0392b\n14.03 Ala\n2.07`);
   assert.ok(withList.includes('fill="#cfe8cf"'));
   assert.ok(withList.includes('fill="#c0392b">14<'));

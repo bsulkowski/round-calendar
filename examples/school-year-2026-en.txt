@@ -11,7 +11,7 @@ weekdays: outwards  # or inwards: the week runs from the rim to the centre
 rings: counters     # bands between the year and the months: zodiac, counters
 counter: weeks from 1.09 to 25.06 school weeks   # numbered from 1; ends on a day or a number (to 40); the name is optional
 
-[Holidays in Poland]   # a group of days: its days get its colours; those with names are listed under the disc
+[Public holidays in Poland]   # a group of days: its days get its colours; those with names are listed under the disc
 background: #eaeaea    # the cells' background; without it they stay as they are
 1.01 New Year’s Day
 6.01 Epiphany
