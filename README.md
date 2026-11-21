@@ -35,7 +35,8 @@ be written in English or in Polish — only the names on the sheet follow the la
 | `first day: sun` | The weekday the week starts with on the radius: on the innermost ring, or with `weekdays: inwards` the outermost. Monday by default. `wed` puts the weekend in the middle. |
 | `direction: anticlockwise` | Which way the weeks go round: `clockwise` (the default) or `anticlockwise`. |
 | `weekdays: inwards` | Which way a week runs along the radius: `outwards`, from the centre (the default), or `inwards`, from the rim. |
-| `names: short` | Months in three letters (`Jan`, `Feb`…) and the zodiac as its signs (♈ ♉ …) instead of full names, which otherwise shrink to fit when the inside is small. `full` by default. |
+| `months: short` | How the months are named: `full` (the default), `short` in three letters (`Jan`, `Feb`…) or `roman` numerals (`I`, `II`…). Full names shrink to fit when the inside is small. |
+| `zodiac: signs` | How the zodiac is named: `full` (the default) or `signs` (♈ ♉ …). |
 | `rings: seasons, zodiac, counters` | The bands between the year in the middle and the months, which are always there, from the centre outwards. `counters` sets where the counters go (else last, just inside the months). By default the seasons; `rings: none` leaves only the year and the months. |
 | `counter: weeks from 1.09 to 25.06 school weeks` | A band with weeks or months numbered from a day: 1, 2, 3…, each number over the days it holds, changing on exact days. A day without a year repeats: the count starts again from 1 each year. With a year (`from 2027-05-03`) it runs on and shows nothing before that day. `to` ends it on a day, the last one counted (`to 25.06`), or after a number (`to 40`); without it the count runs to the next start or the end of the calendar. Weeks of the calendar year start on its first Monday (`from 4.01.2027`). The name is optional; it stands just before the counter's start (number 1) — before the seam if it starts with the calendar or earlier — in place of the numbers it covers. Several `counter` lines give several bands. |
 | `timezone: +1` | The time zone for the dates of equinoxes and solstices. UTC by default. |
@@ -46,7 +47,7 @@ be written in English or in Polish — only the names on the sheet follow the la
 | `format: 1` | The version of the file format. Saving a file adds it; a file without it is format 1. |
 
 Polish keywords: `rok`, `od`, `góra`, `pierwszy dzień`, `kierunek` (`zgodnie z zegarem`, `przeciwnie do zegara`),
-`dni tygodnia` (`od środka`, `do środka`), `nazwy` (`pełne`, `skrócone`), `pierścienie`, `licznik`, `strefa`, `kolory`, `tytuł`, `wnętrze`, `podpis`;
+`dni tygodnia` (`od środka`, `do środka`), `miesiące` (`pełne`, `skrócone`, `rzymskie`), `zodiak` (`pełne`, `znaki`), `pierścienie`, `licznik`, `strefa`, `kolory`, `tytuł`, `wnętrze`, `podpis`;
 units `tygodnie`, `miesiące`; `do` for `to`.
 
 The week runs along the radius and on into the next column, so its order on the radius is always

@@ -276,7 +276,8 @@ test('settings written as text read back the same, in either language', () => {
     'year: 2028\ntop: january\nrings: counters, zodiac, seasons\ncounter: months from 31.01.2028 to 12\ncounter: weeks from 4.01.2027 week\ntimezone: -5:30',
     'rok: 2026\nod: 1.09.2027\ngóra: 15.03.2028\nkolory: weekend=#eee, linie=#123456\ntytuł: A.D. 2027\npodpis: jeden\npodpis: dwa',
     'rok: 2026\ntytuł: Rok\ntytuł: szkolny\nwnętrze: 4',
-    'rok: 2026\nnazwy: skrócone\npierścienie: zodiak',
+    'rok: 2026\nmiesiące: rzymskie\nzodiak: znaki\npierścienie: zodiak',
+    'year: 2026\nmonths: short',
     'year: 2026\ntitle: none\ninside: 1',
   ];
   for (const text of texts) {
@@ -323,17 +324,22 @@ test('the centre: rows of text, no text; the size of the inside', () => {
   }
 });
 
-test('short names: months in three letters, the zodiac as signs', () => {
+test('names of the months and of the zodiac', () => {
   const cal = (text: string) => parseCalendar(text, 'pl', 2026);
-  assert.equal(cal('').short, false);
-  assert.equal(cal('nazwy: skrócone').short, true);
-  assert.equal(cal('names: short').short, true);
-  assert.equal(cal('nazwy: pełne').short, false);
-  assert.equal(cal('nazwy: małe').issues.length, 1);
-  const c = cal('nazwy: skrócone\npierścienie: zodiak');
-  const r = calendarRange(c);
-  assert.deepEqual(bandSegments(c, r, 'months', 'pl').map((s) => s.label).slice(0, 3), ['sty', 'lut', 'mar']);
-  assert.deepEqual(bandSegments(c, r, 'months', 'en').map((s) => s.label).slice(0, 2), ['Jan', 'Feb']);
-  assert.ok(bandSegments(c, r, 'zodiac', 'pl').every((s) => /^[\u2648-\u2653]\uFE0E$/.test(s.label)));
-  assert.ok(renderCalendar(c, 'pl').includes('♑\uFE0E'));
+  assert.equal(cal('').monthNames, 'full');
+  assert.equal(cal('').zodiacNames, 'full');
+  assert.equal(cal('miesiące: skrócone').monthNames, 'short');
+  assert.equal(cal('months: roman').monthNames, 'roman');
+  assert.equal(cal('zodiak: znaki').zodiacNames, 'signs');
+  assert.equal(cal('miesiące: małe').issues.length, 1);
+  assert.equal(cal('zodiak: skrócone').issues.length, 1);
+  const labels = (text: string, band: 'months' | 'zodiac', lang: 'pl' | 'en' = 'pl') => {
+    const c = cal(text);
+    return bandSegments(c, calendarRange(c), band, lang).map((s) => s.label);
+  };
+  assert.deepEqual(labels('miesiące: skrócone', 'months').slice(0, 3), ['sty', 'lut', 'mar']);
+  assert.deepEqual(labels('miesiące: skrócone', 'months', 'en').slice(0, 2), ['Jan', 'Feb']);
+  assert.deepEqual(labels('miesiące: rzymskie', 'months').slice(0, 4), ['I', 'II', 'III', 'IV']);
+  assert.ok(labels('zodiak: znaki', 'zodiac').every((s) => /^[\u2648-\u2653]\uFE0E$/.test(s)));
+  assert.ok(renderCalendar(cal('zodiak: znaki\npierścienie: zodiak'), 'pl').includes('♑\uFE0E'));
 });

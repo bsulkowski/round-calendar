@@ -36,7 +36,8 @@ na kartce.
 | `pierwszy dzień: nd` | Dzień, od którego zaczyna się tydzień na promieniu: na najbardziej wewnętrznym pierścieniu, a przy `dni tygodnia: do środka` na zewnętrznym. Domyślnie poniedziałek. `śr` daje weekend w środku. |
 | `kierunek: przeciwnie do zegara` | W którą stronę idą tygodnie: `zgodnie z zegarem` (domyślnie) albo `przeciwnie do zegara`. |
 | `dni tygodnia: do środka` | W którą stronę biegnie tydzień wzdłuż promienia: `od środka` (domyślnie) albo `do środka`, od krawędzi. |
-| `nazwy: skrócone` | Miesiące trzema literami (`sty`, `lut`…), a zodiak znakami (♈ ♉ …) zamiast pełnych nazw, które przy małym wnętrzu zmniejszają się, żeby się zmieścić. Domyślnie `pełne`. |
+| `miesiące: skrócone` | Jak nazwane są miesiące: `pełne` (domyślnie), `skrócone` do trzech liter (`sty`, `lut`…) albo `rzymskie` (`I`, `II`…). Pełne nazwy przy małym wnętrzu zmniejszają się, żeby się zmieścić. |
+| `zodiak: znaki` | Jak nazwany jest zodiak: `pełne` (domyślnie) albo `znaki` (♈ ♉ …). |
 | `pierścienie: pory roku, zodiak, liczniki` | Pasy między rokiem pośrodku a miesiącami, które są zawsze, od środka na zewnątrz. `liczniki` ustawia miejsce liczników (bez tego stoją na końcu, tuż wewnątrz miesięcy). Domyślnie pory roku; `pierścienie: brak` zostawia sam rok i miesiące. |
 | `licznik: tygodnie od 1.09 do 25.06 tygodnie szkolne` | Pas z tygodniami albo miesiącami liczonymi od danego dnia: 1, 2, 3…, każdy numer nad dniami, które obejmuje, zmiana w dokładne dni. Dzień bez roku się powtarza: co roku liczy się od nowa od 1. Z rokiem (`od 2027-05-03`) liczy dalej, a przed tym dniem nic nie pokazuje. `do` kończy licznik w dany dzień, ostatni liczony (`do 25.06`), albo po danym numerze (`do 40`); bez tego liczy do następnego początku albo do końca kalendarza. Tygodnie roku kalendarzowego zaczyna się od pierwszego poniedziałku (`od 4.01.2027`). Nazwa nie jest konieczna; stoi tuż przed początkiem licznika (numerem 1) — przed łączeniem, jeśli licznik zaczyna się razem z kalendarzem albo wcześniej — w miejscu numerów, które zakrywa. Kilka linii `licznik` to kilka pasów. |
 | `strefa: +1` | Strefa czasowa dla dat równonocy i przesileń. Domyślnie UTC. |
@@ -47,7 +48,7 @@ na kartce.
 | `format: 1` | Wersja formatu pliku. Zapis do pliku ją dodaje; plik bez niej to format 1. |
 
 Angielskie słowa kluczowe: `year`, `from`, `top`, `first day`, `direction` (`clockwise`, `anticlockwise`),
-`weekdays` (`outwards`, `inwards`), `names` (`full`, `short`), `rings`, `counter`, `timezone`, `colors`, `title`, `inside`, `signature`;
+`weekdays` (`outwards`, `inwards`), `months` (`full`, `short`, `roman`), `zodiac` (`full`, `signs`), `rings`, `counter`, `timezone`, `colors`, `title`, `inside`, `signature`;
 jednostki `weeks`, `months`; `to` albo `until` zamiast `do`.
 
 Tydzień biegnie wzdłuż promienia i dalej do następnej kolumny, więc jego kolejność na promieniu
