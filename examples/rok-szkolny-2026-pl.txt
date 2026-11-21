@@ -11,7 +11,7 @@ dni tygodnia: od środka      # albo do środka: tydzień biegnie od krawędzi d
 pierścienie: liczniki        # pasy między rokiem a miesiącami: zodiak, liczniki
 licznik: tygodnie od 1.09 do 25.06 tygodnie szkolne   # numery od 1; koniec to dzień albo liczba (do 40); nazwa nie jest konieczna
 
-[Święta państwowe w Polsce]   # grupa dni: jej dni dostają jej kolory; te z nazwami są wypisane pod tarczą
+[Dni wolne od pracy w Polsce]   # grupa dni: jej dni dostają jej kolory; te z nazwami są wypisane pod tarczą
 tło: #eaeaea        # tło pól; bez niego zostają takie jak są
 1.01 Nowy Rok
 6.01 Trzech Króli
