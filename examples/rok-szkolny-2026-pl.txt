@@ -8,6 +8,7 @@ góra: styczeń       # miesiąc, który zaczyna się na górze; bez tego pierws
 pierwszy dzień: pn  # dzień, od którego zaczyna się tydzień na promieniu; śr daje weekend w środku
 kierunek: zgodnie z zegarem  # albo przeciwnie do zegara
 dni tygodnia: od środka      # albo do środka: tydzień biegnie od krawędzi do środka
+księżyc: pełnia i nów        # pełnie w kółku, nowie na wypełnionym; albo pełnia, albo brak
 pierścienie: liczniki        # pasy między rokiem a miesiącami: zodiak, liczniki
 licznik: tygodnie od 1.09 do 25.06 tygodnie szkolne   # numery od 1; koniec to dzień albo liczba (do 40); nazwa nie jest konieczna
 

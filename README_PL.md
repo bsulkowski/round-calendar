@@ -37,6 +37,7 @@ na kartce.
 | `dni tygodnia: do środka` | W którą stronę biegnie tydzień wzdłuż promienia: `od środka` (domyślnie) albo `do środka`, od krawędzi. |
 | `miesiące: skrócone` | Jak nazwane są miesiące: `pełne` (domyślnie), `skrócone` do trzech liter (`sty`, `lut`…) albo `rzymskie` (`I`, `II`…). Pełne nazwy przy małym wnętrzu zmniejszają się, żeby się zmieścić. |
 | `zodiak: znaki` | Jak nazwany jest zodiak: `pełne` (domyślnie) albo `znaki` (♈ ♉ …). |
+| `księżyc: pełnia i nów` | Fazy Księżyca: `pełnia` obwodzi kółkiem dni pełni, `pełnia i nów` dodatkowo wypełnia dni nowiu (numer na biało); domyślnie `brak`. Faza to chwila, więc jej dzień zależy od strefy czasowej: tej, w której działa kod (w przeglądarce — czytelnika), albo podanej w `renderCalendar`. |
 | `pierścienie: zodiak, liczniki` | Pasy między rokiem pośrodku a miesiącami, które są zawsze, od środka na zewnątrz. `liczniki` ustawia miejsce liczników (bez tego stoją na końcu, tuż wewnątrz miesięcy). Domyślnie żadnych. |
 | `licznik: tygodnie od 1.09 do 25.06 tygodnie szkolne` | Pas z tygodniami albo miesiącami liczonymi od danego dnia: 1, 2, 3…, każdy numer nad dniami, które obejmuje, zmiana w dokładne dni. Dzień bez roku się powtarza: co roku liczy się od nowa od 1. Z rokiem (`od 2027-05-03`) liczy dalej, a przed tym dniem nic nie pokazuje. `do` kończy licznik w dany dzień, ostatni liczony (`do 25.06`), albo po danym numerze (`do 40`); bez tego liczy do następnego początku albo do końca kalendarza. Tygodnie roku kalendarzowego zaczyna się od pierwszego poniedziałku (`od 4.01.2027`). Nazwa nie jest konieczna; stoi tuż przed początkiem licznika (numerem 1) — przed łączeniem, jeśli licznik zaczyna się razem z kalendarzem albo wcześniej — w miejscu numerów, które zakrywa. Kilka linii `licznik` to kilka pasów. |
 | `kolory: weekend=#eaeaea, linie=#c0c0c0` | Kolory pól weekendu i linii. |
@@ -46,7 +47,7 @@ na kartce.
 | `format: 1` | Wersja formatu pliku. Zapis do pliku ją dodaje; plik bez niej to format 1. |
 
 Angielskie słowa kluczowe: `year`, `from`, `top`, `first day`, `direction` (`clockwise`, `anticlockwise`),
-`weekdays` (`outwards`, `inwards`), `months` (`full`, `short`, `roman`), `zodiac` (`full`, `signs`), `rings`, `counter`, `colors`, `title`, `inside`, `signature`;
+`weekdays` (`outwards`, `inwards`), `months` (`full`, `short`, `roman`), `zodiac` (`full`, `signs`), `moon` (`full`, `full and new`, `none`), `rings`, `counter`, `colors`, `title`, `inside`, `signature`;
 jednostki `weeks`, `months`; `to` albo `until` zamiast `do`; w grupach `background` zamiast `tło`, `text` zamiast `tekst`, `easter` zamiast `wielkanoc`.
 
 ### Własne dni
@@ -98,6 +99,8 @@ Gotowe ustawienia i narysowane z nich arkusze są w [`examples/`](examples).
 
 - **Dni tygodnia i lata przestępne** dla dowolnego roku kalendarza gregoriańskiego (1583–2998).
 - **Znaki zodiaku** mają stałe daty, jak w drukowanych kalendarzach.
+- **Fazy Księżyca** według Meeusa, rozdz. 49 — z dokładnością do minuty, co ma znaczenie tylko
+  wtedy, gdy faza wypada tuż przy północy.
 - **Niedziela Wielkanocna** dla dowolnego roku kalendarza gregoriańskiego (algorytm anonimowy,
   Meeus rozdz. 8) i dni od niej liczone.
 
@@ -112,7 +115,7 @@ import { EXAMPLE } from 'round-calendar/examples';
 
 const cal = parseCalendar(EXAMPLE.pl, 'pl', new Date().getFullYear()); // ustawienia, cal.issues
 calendarRange(cal);                     // { start, days }: pierwszy dzień (dni od 1970-01-01) i ile dni
-const svg = renderCalendar(cal, 'pl');  // <svg …> 210 × 297 mm
+const svg = renderCalendar(cal, 'pl');  // <svg …> 210 × 297 mm; { timeZone: 'Europe/Warsaw' } dla dni faz Księżyca
 formatCalendar(cal, 'pl');              // ustawienia znów jako tekst: rok, potem to, co różni się od domyślnych
 withFormatLine(text);                   // tekst z linią `format: 1`, tak jak przy zapisie do pliku
 parseGroupLines(text, 'pl');            // dni jednej grupy z samych jej linii, z błędami

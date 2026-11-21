@@ -36,6 +36,7 @@ be written in English or in Polish — only the names on the sheet follow the la
 | `weekdays: inwards` | Which way a week runs along the radius: `outwards`, from the centre (the default), or `inwards`, from the rim. |
 | `months: short` | How the months are named: `full` (the default), `short` in three letters (`Jan`, `Feb`…) or `roman` numerals (`I`, `II`…). Full names shrink to fit when the inside is small. |
 | `zodiac: signs` | How the zodiac is named: `full` (the default) or `signs` (♈ ♉ …). |
+| `moon: full and new` | Phases of the moon: `full` rings the days of full moons, `full and new` also fills the days of new moons (the number in white); `none` by default. A phase is an instant, so its day depends on the time zone: the one the code runs in (in a browser, the reader's), or one passed to `renderCalendar`. |
 | `rings: zodiac, counters` | The bands between the year in the middle and the months, which are always there, from the centre outwards. `counters` sets where the counters go (else last, just inside the months). By default none. |
 | `counter: weeks from 1.09 to 25.06 school weeks` | A band with weeks or months numbered from a day: 1, 2, 3…, each number over the days it holds, changing on exact days. A day without a year repeats: the count starts again from 1 each year. With a year (`from 2027-05-03`) it runs on and shows nothing before that day. `to` ends it on a day, the last one counted (`to 25.06`), or after a number (`to 40`); without it the count runs to the next start or the end of the calendar. Weeks of the calendar year start on its first Monday (`from 4.01.2027`). The name is optional; it stands just before the counter's start (number 1) — before the seam if it starts with the calendar or earlier — in place of the numbers it covers. Several `counter` lines give several bands. |
 | `colors: weekend=#eaeaea, lines=#c0c0c0` | Colours of the weekend cells and of the lines. |
@@ -45,7 +46,7 @@ be written in English or in Polish — only the names on the sheet follow the la
 | `format: 1` | The version of the file format. Saving a file adds it; a file without it is format 1. |
 
 Polish keywords: `rok`, `od`, `góra`, `pierwszy dzień`, `kierunek` (`zgodnie z zegarem`, `przeciwnie do zegara`),
-`dni tygodnia` (`od środka`, `do środka`), `miesiące` (`pełne`, `skrócone`, `rzymskie`), `zodiak` (`pełne`, `znaki`), `pierścienie`, `licznik`, `kolory`, `tytuł`, `wnętrze`, `podpis`;
+`dni tygodnia` (`od środka`, `do środka`), `miesiące` (`pełne`, `skrócone`, `rzymskie`), `zodiak` (`pełne`, `znaki`), `księżyc` (`pełnia`, `pełnia i nów`, `brak`), `pierścienie`, `licznik`, `kolory`, `tytuł`, `wnętrze`, `podpis`;
 units `tygodnie`, `miesiące`; `do` for `to`; in groups `tło` for `background`, `tekst` for `text`, `wielkanoc` for `easter`.
 
 ### Days of your own
@@ -96,6 +97,8 @@ Ready-made settings and the sheets drawn from them are in [`examples/`](examples
 
 - **Weekdays and leap years** for any Gregorian year (1583–2998).
 - **Zodiac signs** use the fixed dates printed in calendars.
+- **Phases of the moon** after Meeus, ch. 49 — to a minute or so, which matters only when a
+  phase falls close to midnight.
 - **Easter Sunday** for any Gregorian year (the anonymous algorithm, Meeus ch. 8), and the days
   counted from it.
 
@@ -110,7 +113,7 @@ import { EXAMPLE } from 'round-calendar/examples';
 
 const cal = parseCalendar(EXAMPLE.en, 'en', new Date().getFullYear()); // settings, cal.issues
 calendarRange(cal);                     // { start, days }: the first day (days since 1970-01-01) and how many
-const svg = renderCalendar(cal, 'en');  // <svg …> 210 × 297 mm
+const svg = renderCalendar(cal, 'en');  // <svg …> 210 × 297 mm; { timeZone: 'Europe/Warsaw' } for the moon's days
 formatCalendar(cal, 'en');              // the settings as text again: the year, then what differs from the defaults
 withFormatLine(text);                   // the text with a `format: 1` line, as saved to a file
 parseGroupLines(text, 'en');            // the days of one group from its lines alone, with issues

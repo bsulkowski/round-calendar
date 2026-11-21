@@ -39,6 +39,6 @@ for (const [name, lang, text] of sheets) {
   const cal = parseCalendar(text, lang, new Date().getFullYear());
   if (cal.issues.length) throw new Error(`${name}: ${JSON.stringify(cal.issues)}`);
   writeFileSync(new URL(`${name}.txt`, dir), withFormatLine(text));
-  writeFileSync(new URL(`${name}.svg`, dir), `<?xml version="1.0" encoding="UTF-8"?>\n${renderCalendar(cal, lang)}\n`);
+  writeFileSync(new URL(`${name}.svg`, dir), `<?xml version="1.0" encoding="UTF-8"?>\n${renderCalendar(cal, lang, { timeZone: 'Europe/Warsaw' })}\n`);
   console.log(name);
 }

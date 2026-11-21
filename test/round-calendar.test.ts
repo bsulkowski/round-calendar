@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   parseCalendar, renderCalendar, calendarRange, layoutCalendar, counterSegments, counterStart, dateOf, epochDay, weekday,
-  withFormatLine, formatCalendar, bandSegments, easter, groupDays, parseGroupLines,
+  withFormatLine, formatCalendar, bandSegments, easter, groupDays, parseGroupLines, moonPhase, moonDays,
   MIN_YEAR, MAX_YEAR,
 } from '../src/round-calendar.ts';
 import { EXAMPLE } from '../src/examples.ts';
@@ -395,4 +395,32 @@ test('days on the sheet and the list under the disc', () => {
   const many = Array.from({ length: 60 }, (_, i) => `${(i % 28) + 1}.${(i % 12) + 1} Dzień ${i}`).join('\n');
   assert.ok(Math.abs(centre(svg('[A]\n1.05 Jeden')) - centre(plain)) < 0.01);
   assert.ok(centre(svg(`[A]\n${many}`)) < centre(plain) - 50);
+});
+
+test('phases of the moon', () => {
+  // Meeus, example 49.a: the new moon of February 1977.
+  assert.equal(moonPhase(-283).toFixed(5), '2443192.65118');
+  const cal = parseCalendar('rok: 2026\nksiężyc: pełnia i nów', 'pl', 2026);
+  assert.equal(cal.moon, 'both');
+  const r = calendarRange(cal);
+  const full = (zone: string) => moonDays(r, zone).filter((x) => x.phase === 'full').map((x) => iso(r.start + x.day).slice(5));
+  assert.deepEqual(full('Europe/Warsaw'), ['01-03', '02-01', '03-03', '04-02', '05-01', '05-31', '06-30', '07-29', '08-28',
+    '09-26', '10-26', '11-24', '12-24']);
+  // The full moon of 29 June 2026 is just before midnight in UTC: the next day in Warsaw.
+  assert.ok(full('UTC').includes('06-29'));
+  assert.equal(moonDays(r, 'UTC').filter((x) => x.phase === 'new').length, 12);
+  // Settings in both languages, saved and read back.
+  const pl = (t: string) => parseCalendar(t, 'pl', 2026);
+  assert.equal(pl('moon: full').moon, 'full');
+  assert.equal(pl('księżyc: brak').moon, 'none');
+  assert.equal(pl('').moon, 'none');
+  assert.equal(pl('księżyc: kwadra').issues.length, 1);
+  assert.ok(formatCalendar(cal, 'pl').includes('księżyc: pełnia i nów'));
+  assert.ok(formatCalendar(cal, 'en').includes('moon: full and new'));
+  // On the sheet: rings for full moons, discs for new ones, nothing without the setting.
+  const svg = (t: string) => renderCalendar(pl(t), 'pl', { timeZone: 'Europe/Warsaw' });
+  assert.equal(svg('rok: 2026\nksiężyc: pełnia').split('class="moon-full"').length - 1, 13);
+  assert.equal(svg('rok: 2026\nksiężyc: pełnia').split('class="moon-new"').length - 1, 0);
+  assert.equal(svg('rok: 2026\nksiężyc: pełnia i nów').split('class="moon-new"').length - 1, 12);
+  assert.ok(!svg('rok: 2026').includes('class="moon-'));
 });

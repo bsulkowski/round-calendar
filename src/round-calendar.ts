@@ -13,7 +13,7 @@ export type Lang = 'en' | 'pl';
 // Two separate numbers (see README, Compatibility):
 // TOOL_VERSION changes with every release of the generator;
 // FORMAT_VERSION changes only if an old settings file could no longer be read the same way.
-export const TOOL_VERSION = '1.1';
+export const TOOL_VERSION = '1.2';
 export const FORMAT_VERSION = 1;
 
 export const MIN_YEAR = 1583; // first full year of the Gregorian calendar
@@ -114,6 +114,7 @@ export interface Calendar {
   outwards: boolean; // a week runs from the centre outwards (else inwards)
   monthNames: MonthNames; // how the months are named in their band
   zodiacNames: ZodiacNames; // how the zodiac signs are named in theirs
+  moon: Moon; // which phases of the moon are marked on their days
   rings: Ring[]; // from the centre outwards, between the year and the months
   counters: Counter[]; // each its own thin band, where 'counters' stands in the rings
   groups: Group[]; // days shaded on the disc and named under it, in the order written
@@ -134,6 +135,7 @@ const KEYS: Record<string, string> = {
   'dni tygodnia': 'weekdays', weekdays: 'weekdays',
   miesiące: 'monthNames', miesiace: 'monthNames', months: 'monthNames',
   zodiak: 'zodiacNames', zodiac: 'zodiacNames',
+  księżyc: 'moon', ksiezyc: 'moon', moon: 'moon',
   pierścienie: 'rings', pierscienie: 'rings', rings: 'rings',
   kolory: 'colors', colors: 'colors', colours: 'colors',
   tytuł: 'title', tytul: 'title', title: 'title',
@@ -179,6 +181,14 @@ const MONTH_NAMES: Record<string, MonthNames> = {};
 FULL.forEach((v) => { MONTH_NAMES[v] = 'full'; });
 ['skrócone', 'skrocone', 'krótkie', 'krotkie', 'short', 'abbreviated'].forEach((v) => { MONTH_NAMES[v] = 'short'; });
 ['rzymskie', 'numery', 'roman', 'numbers'].forEach((v) => { MONTH_NAMES[v] = 'roman'; });
+/** Phases of the moon marked on the disc: full moons (the day in a ring), also new moons (the day
+ * on a filled disc), or none. */
+export type Moon = 'none' | 'full' | 'both';
+const MOON: Record<string, Moon> = {};
+['brak', 'none', '-'].forEach((v) => { MOON[v] = 'none'; });
+['pełnia', 'pelnia', 'pełnie', 'pelnie', 'full', 'full moon', 'full moons'].forEach((v) => { MOON[v] = 'full'; });
+['pełnia i nów', 'pelnia i now', 'pełnie i nowie', 'pelnie i nowie', 'nów i pełnia', 'now i pelnia', 'full and new',
+  'new and full', 'full and new moons', 'full moons and new moons'].forEach((v) => { MOON[v] = 'both'; });
 const ZODIAC_NAMES: Record<string, ZodiacNames> = {};
 FULL.forEach((v) => { ZODIAC_NAMES[v] = 'full'; });
 ['znaki', 'symbole', 'signs', 'symbols'].forEach((v) => { ZODIAC_NAMES[v] = 'signs'; });
@@ -238,6 +248,7 @@ const MSG: Record<Lang, Record<string, string>> = {
     weekdays: 'write outwards or inwards',
     monthNames: 'write full, short or roman',
     zodiacNames: 'write full or signs',
+    moon: 'write full, full and new, or none',
     counter: 'write a counter as: weeks from 1.09, then if you like to 25.06 or to 40, and a name; weeks or months',
     order: 'the end is before the start',
     color: 'write a colour as weekend=#hex or lines=#hex',
@@ -260,6 +271,7 @@ const MSG: Record<Lang, Record<string, string>> = {
     weekdays: 'wpisz od środka albo do środka',
     monthNames: 'wpisz pełne, skrócone albo rzymskie',
     zodiacNames: 'wpisz pełne albo znaki',
+    moon: 'wpisz pełnia, pełnia i nów albo brak',
     counter: 'wpisz licznik jako: tygodnie od 1.09, dalej ewentualnie do 25.06 albo do 40 i nazwa; tygodnie albo miesiące',
     order: 'koniec jest przed początkiem',
     color: 'wpisz kolor jako weekend=#hex albo linie=#hex',
@@ -358,6 +370,7 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
     outwards: true,
     monthNames: 'full',
     zodiacNames: 'full',
+    moon: 'none',
     rings: [],
     counters: [],
     groups: [],
@@ -430,6 +443,8 @@ export function parseCalendar(text: string, lang: Lang, defaultYear: number): Ca
       if (OUTWARDS[low] === undefined) issues.push({ line: n, message: say('weekdays') }); else cal.outwards = OUTWARDS[low];
     } else if (key === 'monthNames') {
       if (MONTH_NAMES[low] === undefined) issues.push({ line: n, message: say('monthNames') }); else cal.monthNames = MONTH_NAMES[low];
+    } else if (key === 'moon') {
+      if (MOON[low] === undefined) issues.push({ line: n, message: say('moon') }); else cal.moon = MOON[low];
     } else if (key === 'zodiacNames') {
       if (ZODIAC_NAMES[low] === undefined) issues.push({ line: n, message: say('zodiacNames') }); else cal.zodiacNames = ZODIAC_NAMES[low];
     } else if (key === 'rings') {
@@ -550,6 +565,66 @@ export function groupDays(g: Group, r: Range): { day: number; label: string }[] 
   return out.sort((a, b) => a.day - b.day);
 }
 
+/* ---------- the moon ---------- */
+
+/** Julian Ephemeris Day of a new moon (k whole) or a full moon (k + 0.5): Meeus, Astronomical
+ * Algorithms, ch. 49, with the planetary terms; good to a minute or so in the centuries round 2000. */
+export function moonPhase(k: number): number {
+  const T = k / 1236.85;
+  const d = (x: number) => rad(x % 360);
+  let jde = 2451550.09766 + 29.530588861 * k + 0.00015437 * T * T - 0.00000015 * T ** 3 + 0.00000000073 * T ** 4;
+  const E = 1 - 0.002516 * T - 0.0000074 * T * T;
+  const M = d(2.5534 + 29.1053567 * k - 0.0000014 * T * T - 0.00000011 * T ** 3);
+  const Mp = d(201.5643 + 385.81693528 * k + 0.0107582 * T * T + 0.00001238 * T ** 3 - 0.000000058 * T ** 4);
+  const F = d(160.7108 + 390.67050284 * k - 0.0016118 * T * T - 0.00000227 * T ** 3 + 0.000000011 * T ** 4);
+  const O = d(124.7746 - 1.56375588 * k + 0.0020672 * T * T + 0.00000215 * T ** 3);
+  const full = Math.abs(k - Math.floor(k) - 0.5) < 0.01;
+  const sin = Math.sin;
+  const [a, b, c, e, f] = full ? [-0.40614, 0.17302, 0.01614, 0.01043, 0.00734] : [-0.4072, 0.17241, 0.01608, 0.01039, 0.00739];
+  jde += a * sin(Mp) + b * E * sin(M) + c * sin(2 * Mp) + e * sin(2 * F) + f * E * sin(Mp - M)
+    + (full ? -0.00515 : -0.00514) * E * sin(Mp + M) + (full ? 0.00209 : 0.00208) * E * E * sin(2 * M)
+    - 0.00111 * sin(Mp - 2 * F) - 0.00057 * sin(Mp + 2 * F) + 0.00056 * E * sin(2 * Mp + M) - 0.00042 * sin(3 * Mp)
+    + 0.00042 * E * sin(M + 2 * F) + 0.00038 * E * sin(M - 2 * F) - 0.00024 * E * sin(2 * Mp - M) - 0.00017 * sin(O)
+    - 0.00007 * sin(Mp + 2 * M) + 0.00004 * sin(2 * Mp - 2 * F) + 0.00004 * sin(3 * M) + 0.00003 * sin(Mp + M - 2 * F)
+    + 0.00003 * sin(2 * Mp + 2 * F) - 0.00003 * sin(Mp + M + 2 * F) + 0.00003 * sin(Mp - M + 2 * F)
+    - 0.00002 * sin(Mp - M - 2 * F) - 0.00002 * sin(3 * Mp + M) + 0.00002 * sin(4 * Mp);
+  const A = [
+    [299.77, 0.107408, 325], [251.88, 0.016321, 165], [251.83, 26.651886, 164], [349.42, 36.412478, 126],
+    [84.66, 18.206239, 110], [141.74, 53.303771, 62], [207.14, 2.453732, 60], [154.84, 7.30686, 56],
+    [34.52, 27.261239, 47], [207.19, 0.121824, 42], [291.34, 1.844379, 40], [161.72, 24.198154, 37],
+    [239.56, 25.513099, 35], [331.55, 3.592518, 23],
+  ];
+  A.forEach(([a0, a1, c0], i) => { jde += c0 * 0.000001 * sin(d(a0 + a1 * k - (i === 0 ? 0.009173 * T * T : 0))); });
+  return jde;
+}
+
+/** The day (days since 1970-01-01) on which an instant falls in a time zone: an IANA name, or
+ * without one the zone the code runs in (in a browser, the reader's). */
+export function localDay(ms: number, timeZone?: string): number {
+  if (!timeZone) { const t = new Date(ms); return epochDay(t.getFullYear(), t.getMonth() + 1, t.getDate()); }
+  const parts = new Intl.DateTimeFormat('en-US', { timeZone, year: 'numeric', month: 'numeric', day: 'numeric' }).formatToParts(new Date(ms));
+  const get = (type: string) => Number(parts.find((x) => x.type === type)!.value);
+  return epochDay(get('year'), get('month'), get('day'));
+}
+
+/** Full moons (and new moons) in the range, as days of the range, on the day they fall on in the
+ * time zone. Terrestrial time is turned into universal time with a rough ΔT, which is minutes at most. */
+export function moonDays(r: Range, timeZone?: string): { day: number; phase: 'full' | 'new' }[] {
+  const out: { day: number; phase: 'full' | 'new' }[] = [];
+  const jd0 = r.start + 2440587.5;
+  const k0 = Math.floor((jd0 - 2451550.09766) / 29.530588861) - 1;
+  for (let k = k0; ; k += 0.5) {
+    const jde = moonPhase(k);
+    const year = 2000 + (jde - 2451545) / 365.25;
+    const u = (year - 1820) / 100;
+    const ms = (jde - 2440587.5) * 86400000 - (-20 + 32 * u * u) * 1000;
+    const day = localDay(ms, timeZone) - r.start;
+    if (day >= r.days) break;
+    if (day >= 0) out.push({ day, phase: Number.isInteger(k) ? 'new' : 'full' });
+  }
+  return out;
+}
+
 /* ---------- writing settings ---------- */
 
 /** Names the form and the written settings use, in the language of the page. */
@@ -566,7 +641,7 @@ const WORDS: Record<Lang, Record<string, string>> = {
     rings: 'rings', counter: 'counter', colors: 'colors', title: 'title', inside: 'inside', signature: 'signature',
     seam: 'seam', anticlockwise: 'anticlockwise', inwards: 'inwards', none: 'none', from: 'from', to: 'to',
     weeks: 'weeks', months: 'months', zodiac: 'zodiac', counters: 'counters', lines: 'lines',
-    background: 'background', text: 'text', easter: 'easter',
+    background: 'background', text: 'text', easter: 'easter', moon: 'moon', fullMoon: 'full', fullNewMoon: 'full and new',
   },
   pl: {
     year: 'rok', start: 'od', top: 'góra', firstDay: 'pierwszy dzień', direction: 'kierunek', weekdays: 'dni tygodnia',
@@ -574,7 +649,7 @@ const WORDS: Record<Lang, Record<string, string>> = {
     rings: 'pierścienie', counter: 'licznik', colors: 'kolory', title: 'tytuł', inside: 'wnętrze', signature: 'podpis',
     seam: 'łączenie', anticlockwise: 'przeciwnie do zegara', inwards: 'do środka', none: 'brak', from: 'od', to: 'do',
     weeks: 'tygodnie', months: 'miesiące', zodiac: 'zodiak', counters: 'liczniki', lines: 'linie',
-    background: 'tło', text: 'tekst', easter: 'wielkanoc',
+    background: 'tło', text: 'tekst', easter: 'wielkanoc', moon: 'księżyc', fullMoon: 'pełnia', fullNewMoon: 'pełnia i nów',
   },
 };
 const DAY_WORDS: Record<Lang, string[]> = {
@@ -598,6 +673,7 @@ export function formatCalendar(cal: Calendar, lang: Lang): string {
   if (!cal.outwards) put('weekdays', w.inwards);
   if (cal.monthNames !== 'full') put('months', w[cal.monthNames]);
   if (cal.zodiacNames !== 'full') put('zodiac', w[cal.zodiacNames]);
+  if (cal.moon !== 'none') put('moon', cal.moon === 'full' ? w.fullMoon : w.fullNewMoon);
   if (cal.rings.length) put('rings', cal.rings.map((r) => w[r]).join(', '));
   for (const c of cal.counters) {
     const until = !c.until ? '' : ` ${w.to} ${c.until.kind === 'count' ? c.until.n : showDate(c.until)}`;
@@ -783,7 +859,11 @@ const BELT_SIZE: Record<Part, number> = { year: 0.5, zodiac: 0.5, counters: 0.3,
 const BELT_FONT: Record<Part, number> = { year: 0, zodiac: 11, counters: 9, months: 13 };
 const BELT_INK: Record<Part, string> = { year: '#959595', zodiac: '#959595', counters: '#7a7a7a', months: '#6b6b6b' };
 
-export function renderCalendar(cal: Calendar, lang: Lang): string {
+/** `timeZone` sets the days of the moon's phases: an IANA name, or without one the zone the code
+ * runs in. */
+export interface RenderOptions { timeZone?: string }
+
+export function renderCalendar(cal: Calendar, lang: Lang, options: RenderOptions = {}): string {
   const { firstDay, rings } = cal;
   const color = (k: string) => cal.colors[k] ?? DEFAULT_COLORS[k];
   const { width: W, height: H } = SHEET;
@@ -963,11 +1043,23 @@ export function renderCalendar(cal: Calendar, lang: Lang): string {
   // Colours of the day numbers: a later group's over an earlier one's.
   const dayInk = new Map<number, string>();
   cal.groups.forEach((g, i) => { if (g.text) for (const x of marked[i]) dayInk.set(x.day, g.text); });
+  const moon = new Map<number, 'full' | 'new'>();
+  if (cal.moon !== 'none') {
+    for (const x of moonDays(L.range, options.timeZone)) if (x.phase === 'full' || cal.moon === 'both') moon.set(x.day, x.phase);
+  }
   o.push('<g>');
   for (let d = 0; d < N; d++) {
     const { col, ring } = cellOf(d);
     const a = A((col + 0.5) * step);
-    o.push(cellText(a, rMid(dayR(ring)), String(dateOf(L.range.start + d)[2]), fDay, dayInk.get(d) ?? DAY_INK));
+    const ink = dayInk.get(d) ?? DAY_INK;
+    const phase = moon.get(d);
+    // A full moon rings the day; a new moon is a filled disc with the number in white.
+    if (phase) {
+      const [x, y] = P(a, rMid(dayR(ring))).split(' ');
+      o.push(`<circle class="moon-${phase}" cx="${x}" cy="${y}" r="${r2(fDay * 0.78)}" ${phase === 'full'
+        ? `fill="none" stroke="${esc(ink)}" stroke-width="1"` : `fill="${esc(ink)}"`}/>`);
+    }
+    o.push(cellText(a, rMid(dayR(ring)), String(dateOf(L.range.start + d)[2]), fDay, phase === 'new' ? '#ffffff' : ink));
   }
   for (let k = 0; k < 7; k++) {
     const name = WEEKDAYS[lang][(k + firstDay) % 7];

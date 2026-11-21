@@ -10,6 +10,7 @@ top: january        # the month that starts at the top; without it, the first
 first day: mon      # the weekday the week starts with on the radius; wed puts the weekend in the middle
 direction: clockwise  # or anticlockwise
 weekdays: outwards  # or inwards: the week runs from the rim to the centre
+moon: full and new  # full moons ringed, new moons filled; or full, or none
 rings: counters     # bands between the year and the months: zodiac, counters
 counter: weeks from 1.09 to 25.06 school weeks   # numbered from 1; ends on a day or a number (to 40); the name is optional
 
@@ -55,6 +56,7 @@ góra: styczeń       # miesiąc, który zaczyna się na górze; bez tego pierws
 pierwszy dzień: pn  # dzień, od którego zaczyna się tydzień na promieniu; śr daje weekend w środku
 kierunek: zgodnie z zegarem  # albo przeciwnie do zegara
 dni tygodnia: od środka      # albo do środka: tydzień biegnie od krawędzi do środka
+księżyc: pełnia i nów        # pełnie w kółku, nowie na wypełnionym; albo pełnia, albo brak
 pierścienie: liczniki        # pasy między rokiem a miesiącami: zodiak, liczniki
 licznik: tygodnie od 1.09 do 25.06 tygodnie szkolne   # numery od 1; koniec to dzień albo liczba (do 40); nazwa nie jest konieczna
 
